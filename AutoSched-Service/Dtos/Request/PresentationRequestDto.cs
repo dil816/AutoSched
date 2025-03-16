@@ -1,14 +1,11 @@
-﻿namespace AutoSched_Service.Models
+﻿namespace AutoSched_Service.Dtos.Request
 {
-    public class Presentation
+    public class PresentationRequestDto
     {
-        public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public DateTimeOffset StartTime { get; set; }
         public DateTimeOffset EndTime { get; set; }
-        public Reschedule? Reschedule { get; set; } //relation 1:1 with reschedule
-        public List<Schedule> Schedules { get; set; } = []; // 1:M parent
     }
 }
