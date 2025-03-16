@@ -15,12 +15,14 @@ namespace AutoSched_Service.Services
     public class AuthServices : IAuthServices
     {
         private readonly AppDbContext _appDbContext;
+        private readonly IHttpContextAccessor _httpcontextAccessor;
         private readonly IConfiguration _configuration;
 
-        public AuthServices(AppDbContext appDbContext, IConfiguration configuration)
+        public AuthServices(AppDbContext appDbContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _appDbContext = appDbContext;
             _configuration = configuration;
+            _httpcontextAccessor = httpContextAccessor;
         }
 
         public async Task<TokenResponseDto?> LoginAsync(UserLoginRequestDto request)
@@ -135,6 +137,18 @@ namespace AutoSched_Service.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        }
+
+        public string? CurrentUserId()
+        {
+            return _httpcontextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        }
+
+        public string? CurrentUserRole()
+        {
+            return _httpcontextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
+
         }
     }
 }
