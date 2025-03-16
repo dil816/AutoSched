@@ -9,5 +9,6 @@ namespace AutoSched_Service.Database
         public DbSet<Presentation> Presentations { get; set; }
         public DbSet<ExaminarAvailability> ExaminarAvailabilities { get; set; }
         public DbSet<Reschedule> Reschedules { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
     }
 }
