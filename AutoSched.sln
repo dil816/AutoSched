@@ -5,6 +5,8 @@ VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSched-Service", "AutoSched-Service\AutoSched-Service.csproj", "{21D25B92-33C5-479C-9B69-A04F684D3BA5}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "autosched-client", "autosched-client\autosched-client.esproj", "{6353B424-D6DC-4EA4-9CBE-FB395FC7B86D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,12 @@ Global
 		{21D25B92-33C5-479C-9B69-A04F684D3BA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21D25B92-33C5-479C-9B69-A04F684D3BA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{21D25B92-33C5-479C-9B69-A04F684D3BA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6353B424-D6DC-4EA4-9CBE-FB395FC7B86D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6353B424-D6DC-4EA4-9CBE-FB395FC7B86D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6353B424-D6DC-4EA4-9CBE-FB395FC7B86D}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{6353B424-D6DC-4EA4-9CBE-FB395FC7B86D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6353B424-D6DC-4EA4-9CBE-FB395FC7B86D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6353B424-D6DC-4EA4-9CBE-FB395FC7B86D}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
