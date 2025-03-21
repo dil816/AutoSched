@@ -26,6 +26,7 @@ namespace AutoSched_Service.Controllers
                 .AsNoTracking()
                 .Select(p => new PresentationResponseDto
                 {
+                    Id = p.Id,
                     Title = p.Title,
                     Description = p.Description,
                     Type = p.Type,
@@ -51,6 +52,7 @@ namespace AutoSched_Service.Controllers
 
             PresentationResponseDto result = new PresentationResponseDto
             {
+                Id = presentation.Id,
                 Title = presentation.Title,
                 Description = presentation.Description,
                 Type = presentation.Type,
