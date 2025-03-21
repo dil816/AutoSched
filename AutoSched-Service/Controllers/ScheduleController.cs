@@ -3,6 +3,7 @@ using AutoSched_Service.Dtos.Request;
 using AutoSched_Service.Dtos.Response;
 using AutoSched_Service.Models;
 using AutoSched_Service.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
