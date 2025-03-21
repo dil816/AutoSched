@@ -7,7 +7,7 @@ import UserRoutes from "./components/User/user.routes";
 import ScheduleRoutes from "./components/Schedule/schedule.routes";
 import AddProfessor from "./components/shared/AddProfessor";
 import MainContent from "./components/shared/Maincontent";
-import ScheduleForm from "./components/shared/ScheduleForm";
+import ScheduleForm from "./components/Schedule/ScheduleForm";
 
 const AppRoute = () => {
   return (
