@@ -93,6 +93,7 @@ namespace AutoSched_Service.Services
         {
             return new TokenResponseDto
             {
+                Email = user.Email,
                 Accesstoken = CreateToken(user),
                 Refreshtoken = await GenerateAndSaveRefreshtokenAsync(user)
             };

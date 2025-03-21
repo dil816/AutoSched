@@ -23,7 +23,7 @@ namespace AutoSched_Service.Controllers
             var user = await _authServices.RegisterAsync(request);
             if (user is null)
             {
-                return BadRequest("Email is Exists");
+                return BadRequest();  //Email is Exists
             }
             return Ok(user);
         }
@@ -34,7 +34,7 @@ namespace AutoSched_Service.Controllers
             var result = await _authServices.LoginAsync(request);
             if (result is null)
             {
-                return BadRequest("Invalid Password or Username");
+                return BadRequest(); //Invalid Password or Username"
             }
             return Ok(result);
         }

@@ -31,6 +31,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!))
         };
     });
+builder.Services.AddCors(options => options.AddPolicy(name: "autosched-client", policy =>
+{
+    policy.WithOrigins("http://localhost:49931").AllowAnyMethod().AllowAnyHeader();
+}));
+
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthServices, AuthServices>();
@@ -43,6 +48,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.UseCors("autosched-client");
 
 app.UseHttpsRedirection();
 
