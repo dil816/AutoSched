@@ -8,6 +8,8 @@ import ScheduleRoutes from "./components/Schedule/schedule.routes";
 import AddProfessor from "./components/shared/AddProfessor";
 import MainContent from "./components/shared/Maincontent";
 import ScheduleForm from "./components/Schedule/ScheduleForm";
+import PresentationRoutes from "./components/presentations/presentation.routes";
+import ExaminarAvailability from "./components/availability/ExaminarAvailability";
 
 const AppRoute = () => {
   return (
@@ -18,7 +20,8 @@ const AppRoute = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/users/*" element={<UserRoutes />} />
           <Route path="/schedules/*" element={<ScheduleRoutes />} />
-          <Route path="/presentations/*" element={<ScheduleForm />} />
+          <Route path="/presentations/*" element={<PresentationRoutes />} />
+          <Route path="/availability/*" element={<ExaminarAvailability />} />
         </Routes>
       </div>
     </>
