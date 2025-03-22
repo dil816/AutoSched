@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Setting2, Trash } from "iconsax-react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 function AddEditPresentation() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [schedules, setSchedules] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -26,8 +27,14 @@ function AddEditPresentation() {
     }
   }, [id]);
 
-  const getScheduleDetails = (id) => {
+  const getScheduleDetails = async (id) => {
     console.log(id);
+    const response = await fetch(`http://localhost:5008/api/Presentation/${id}` 
+      );
+
+    const data = await response.json();
+    console.log(data);
+    setFormData(data);
   };
 
   const handleChange = (e) => {
@@ -60,8 +67,41 @@ function AddEditPresentation() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const response = await fetch('http://localhost:5008/api/Presentation', {
+    if(id){
+        const response = await fetch(`http://localhost:5008/api/Presentation/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+            
+          });
+    
+          //const data = await response.json();
+          console.log(formData)
+          if (!response.ok){
+            console.error("error")
+          }
+    
+          if (response.ok){
+            navigate('/presentations')
+            console.log(formData)
+          }
+    
+        /*if (validateForm()) {*/
+          //setSchedules(formData);
+            
+          /*setFormData({
+            day: "",
+            timeslot: "",
+            presentation: "",
+            moduleName: "",
+            scheduleDescription: "",
+          });*/
+          setFormError({});
+    }else
+    {
+        const response = await fetch('http://localhost:5008/api/Presentation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -77,6 +117,7 @@ function AddEditPresentation() {
       }
 
       if (response.ok){
+        navigate('/presentations')
         console.log(formData)
       }
 
@@ -90,7 +131,7 @@ function AddEditPresentation() {
         moduleName: "",
         scheduleDescription: "",
       });*/
-      setFormError({});
+      setFormError({});}
     //}
   };
 

@@ -8,6 +8,7 @@ const PresentationRoutes = () => {
     <Routes>
       <Route path="/" element={<Presentation />} />
       <Route path="/addeditpresentation" element={<AddEditPresentation />} />
+      <Route path="/addeditpresentation/:id" element={<AddEditPresentation />} />
     </Routes>
   );
 };
