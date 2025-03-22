@@ -1,67 +1,45 @@
 // components/MainContent.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useAuthContext from "../../hooks/useAuthContext";
 
 function User() {
-  // Sample data for the table
-  const userData = [
-    {
-      name: "Florence Shaw",
-      email: "florence@funtitled.com",
-      access: ["Admin", "Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-    },
-    {
-      name: "Amélie Laurent",
-      email: "amelie@funtitled.com",
-      access: ["Admin", "Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-    },
-    {
-      name: "Anmar Foley",
-      email: "anmar@funtitled.com",
-      access: ["Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-    },
-    {
-      name: "Cailyn King",
-      email: "cailyn@funtitled.com",
-      access: ["Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-    },
-    {
-      name: "Sienna Hewitt",
-      email: "sienna@funtitled.com",
-      access: ["Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-    },
-    {
-      name: "Olly Shroeder",
-      email: "olly@funtitled.com",
-      access: ["Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-    },
-    {
-      name: "Mathilde Lewis",
-      email: "mathilde@funtitled.com",
-      access: ["Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-      active: true,
-    },
-    {
-      name: "Jaya Willis",
-      email: "jaya@funtitled.com",
-      access: ["Data Export", "Data Import"],
-      lastActive: "Mar 4, 2024",
-      dateAdded: "July 4, 2022",
-    },
-  ];
+  const navigate = useNavigate();
+  const { user } = useAuthContext();
+
+  const [userData, setUserData] = useState([]);
+
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      const response = await fetch("http://localhost:5008/api/User", {
+        headers: { Authorization: `Bearer ${user.accesstoken}` },
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setUserData(data);
+        //dispatch({ type: "SET_WORKOUTS", payload: data });
+      }
+    };
+    if (user) {
+      fetchSchedules();
+    }
+  }, [user]);
+
+  const handledelete = async (id) => {
+    const response = await fetch(`http://localhost:5008/api/User/${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      const updatedusers = userData.filter((item) => item.rowId !== id);
+      setUserData(updatedusers);
+    }
+  };
+
+  const handleAddUser = () => {
+    navigate("/users/modifyuser");
+  };
 
   return (
     <main className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
@@ -91,7 +69,10 @@ function User() {
             <span className="mr-2">🛠️</span> Filters
           </button>
         </div>
-        <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
+        <button
+          className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900"
+          onClick={handleAddUser}
+        >
           + Add user
         </button>
       </div>
@@ -104,10 +85,10 @@ function User() {
               <th className="py-3 px-4">
                 <input type="checkbox" className="rounded" />
               </th>
-              <th className="py-3 px-4">User name</th>
+              <th className="py-3 px-4">User</th>
               <th className="py-3 px-4">Access</th>
-              <th className="py-3 px-4">Last active</th>
-              <th className="py-3 px-4">Date added</th>
+              <th className="py-3 px-4">FirstName</th>
+              <th className="py-3 px-4">LastName</th>
               <th className="py-3 px-4"></th>
             </tr>
           </thead>
@@ -119,36 +100,51 @@ function User() {
                 </td>
                 <td className="py-3 px-4 flex items-center">
                   <div className="w-8 h-8 bg-gray-300 rounded-full mr-3 flex items-center justify-center text-white">
-                    {user.name.charAt(0)}
+                    {user.username.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-gray-800">{user.name}</p>
+                    <p className="text-gray-800">{user.username}</p>
                     <p className="text-gray-500 text-sm">{user.email}</p>
                   </div>
                 </td>
-                <td className="py-3 px-4">
-                  <div className="flex space-x-2">
-                    {user.access.map((permission, i) => (
-                      <span
-                        key={i}
-                        className={`px-2 py-1 rounded text-xs ${
-                          permission === "Admin"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-purple-100 text-purple-800"
-                        }`}
-                      >
-                        {permission}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-gray-600">{user.lastActive}</td>
-                <td className="py-3 px-4 text-gray-600">{user.dateAdded}</td>
+                {
+                  <td className="py-3 px-4">
+                    <div className="flex space-x-2">
+                      {user.role == 1 && (
+                        <span className="px-2 py-1 rounded text-xs  bg-green-100 text-green-800">
+                          Admin
+                        </span>
+                      )}
+                      {user.role == 2 && (
+                        <span className="px-2 py-1 rounded text-xs  bg-purple-100 text-purple-800">
+                          Examinar
+                        </span>
+                      )}
+                      {user.role == 3 && (
+                        <span className="px-2 py-1 rounded text-xs  bg-gray-100 text-black-800">
+                          Student
+                        </span>
+                      )}
+                      {user.role == "" && (
+                        <span className="px-2 py-1 rounded text-xs  bg-yellow-100 text-yellow-800">
+                          Pending
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                }
+                <td className="py-3 px-4 text-gray-600">{user.firstName}</td>
+                <td className="py-3 px-4 text-gray-600">{user.lastName}</td>
                 <td className="py-3 px-4 text-gray-600">
-                  {user.active && (
-                    <span className="text-green-500 font-medium">Active</span>
-                  )}
-                  <button className="ml-2">⋮</button>
+                  <Link to={`modifyuser/${user.rowId}`}>Update</Link>
+                </td>
+                <td className="py-3 px-4 text-gray-600">
+                  <button
+                    className="ml-2"
+                    onClick={() => handledelete(user.rowId)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
