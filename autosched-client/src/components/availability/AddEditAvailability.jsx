@@ -2,34 +2,36 @@ import React, { useEffect, useState } from "react";
 import { Setting2, Trash } from "iconsax-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-function UserAddEdit() {
+function AddEditAvailability() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [schedules, setSchedules] = useState([]);
   const [formData, setFormData] = useState({
-    username: "",
-    role: "1",
-    firstName: "",
-    lastName: "",
-    email: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+    isAvailable: true,
+    ExaminarName: "",
   });
-  const [formError, setFormError] = useState({
-    username: "",
-    role: "",
-    firstName: "",
-    lastName: "",
-    email: "",
+  const [formerror, setFormError] = useState({
+    date: "",
+    startTime: "",
+    endTime: "",
+    isAvailable: true,
+    examinarName: "",
   });
 
   useEffect(() => {
     if (id) {
-      getScheduleDetails(id);
+      getScheduleDetails(parseInt(id));
     }
   }, [id]);
 
   const getScheduleDetails = async (id) => {
     console.log(id);
-    const response = await fetch(`http://localhost:5008/api/User/${id}`);
+    const response = await fetch(
+      `http://localhost:5008/api/Availability/${id}`
+    );
 
     const data = await response.json();
 
@@ -82,30 +84,33 @@ function UserAddEdit() {
     console.log(formData);
 
     if (id) {
-      const response = await fetch(`http://localhost:5008/api/User/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `http://localhost:5008/api/Availability/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       if (response.ok) {
         setFormData({
-          username: "",
-          role: "",
-          firstName: "",
-          lastName: "",
-          email: "",
+          date: "",
+          startTime: "",
+          endTime: "",
+          isAvailable: true,
+          ExaminarName: "",
         });
         setFormError({});
 
-        navigate("/users");
+        navigate("/availability");
       } else {
         console.error("not saved");
       }
     } else {
-      const response = await fetch("http://localhost:5008/api/User", {
+      const response = await fetch("http://localhost:5008/api/Availability", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,11 +120,11 @@ function UserAddEdit() {
 
       if (response.ok) {
         setFormData({
-          username: "",
-          role: "",
-          firstName: "",
-          lastName: "",
-          email: "",
+          date: "",
+          startTime: "",
+          endTime: "",
+          isAvailable: true,
+          ExaminarName: "",
         });
         setFormError({});
 
@@ -169,128 +174,179 @@ function UserAddEdit() {
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <h3 className="text-sm font-medium text-gray-500 uppercase mb-4">
-              User Information
+              availability Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Date */}
               <div>
                 <label
                   className="block text-gray-700 font-medium mb-2"
-                  htmlFor="username"
+                  htmlFor="day"
                 >
-                  Username
+                  Date
                 </label>
                 <input
-                  type="text"
-                  id="username"
-                  value={formData.username}
+                  type="date"
+                  id="date"
+                  value={formData.date || ""}
                   onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg ${
-                    formError.username ? "border-red-500" : ""
+                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formerror.date ? "border-red-500" : ""
                   }`}
                 />
-                {formError.username && (
+                {formerror.date && (
+                  <p className="text-red-500 text-sm mt-1">{formerror.date}</p>
+                )}
+              </div>
+              {/* StartTime */}
+              <div>
+                <label
+                  className="block text-gray-700 font-medium mb-2"
+                  htmlFor="day"
+                >
+                  StartTime
+                </label>
+                <input
+                  type="time"
+                  id="startTime"
+                  value={formData.startTime}
+                  onChange={handleChange}
+                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formerror.startTime ? "border-red-500" : ""
+                  }`}
+                />
+                {formerror.startTime && (
                   <p className="text-red-500 text-sm mt-1">
-                    {formError.username}
+                    {formerror.startTime}
                   </p>
                 )}
               </div>
 
+              {/* endTime */}
               <div>
                 <label
                   className="block text-gray-700 font-medium mb-2"
-                  htmlFor="role"
+                  htmlFor="timeslot"
                 >
-                  Role
+                  EndTime
+                </label>
+                <input
+                  type="time"
+                  id="endTime"
+                  value={formData.endTime}
+                  onChange={handleChange}
+                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formerror.endTime ? "border-red-500" : ""
+                  }`}
+                />
+                {formerror.endTime && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {formerror.endTime}
+                  </p>
+                )}
+              </div>
+
+              {/* Availability */}
+              <div>
+                <label
+                  className="block text-gray-700 font-medium mb-2"
+                  htmlFor="isAvailable"
+                >
+                  Availability
                 </label>
                 <select
-                  id="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg ${
-                    formError.role ? "border-red-500" : ""
+                  id="isAvailable"
+                  value={formData.isAvailable}
+                  onChange={(e) =>
+                    handleChange({
+                      target: {
+                        id: "isAvailable",
+                        value: e.target.value === "true",
+                      },
+                    })
+                  }
+                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formerror.isAvailable ? "border-red-500" : ""
                   }`}
                 >
-                  <option value="" selected>
-                    Pending
-                  </option>
-                  <option value="1">Admin</option>
-                  <option value="2">Examiner</option>
-                  <option value="3">Student</option>
+                  <option value="true">Available</option>
+                  <option value="false">Not Available</option>
                 </select>
-              </div>
-
-              <div>
-                <label
-                  className="block text-gray-700 font-medium mb-2"
-                  htmlFor="firstName"
-                >
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg ${
-                    formError.firstName ? "border-red-500" : ""
-                  }`}
-                />
-                {formError.firstName && (
+                {formerror.isAvailable && (
                   <p className="text-red-500 text-sm mt-1">
-                    {formError.firstName}
+                    {formerror.isAvailable}
                   </p>
                 )}
               </div>
 
+              {/* Examinar Name */}
               <div>
                 <label
                   className="block text-gray-700 font-medium mb-2"
-                  htmlFor="lastName"
+                  htmlFor="moduleName"
                 >
-                  Last Name
+                  Examinar Name
                 </label>
                 <input
                   type="text"
-                  id="lastName"
-                  value={formData.lastName}
+                  id="examinarName"
+                  value={formData.examinarName}
                   onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg ${
-                    formError.lastName ? "border-red-500" : ""
+                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formerror.examinarName ? "border-red-500" : ""
                   }`}
+                  placeholder="Module Name"
                 />
-                {formError.lastName && (
+                {formerror.examinarName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {formError.lastName}
+                    {formerror.examinarName}
                   </p>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
-                <label
-                  className="block text-gray-700 font-medium mb-2"
-                  htmlFor="email"
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg ${
-                    formError.email ? "border-red-500" : ""
-                  }`}
-                />
-                {formError.email && (
-                  <p className="text-red-500 text-sm mt-1">{formError.email}</p>
                 )}
               </div>
             </div>
           </div>
 
+          {/* Schedule Description Section */}
+          {/*<div>
+            <h3 className="text-sm font-medium text-gray-500 uppercase mb-4">
+              Description
+            </h3>
+            <div>
+              <label
+                className="block text-gray-700 font-medium mb-2"
+                htmlFor="scheduleDescription"
+              >
+                Schedule Description
+              </label>
+              <textarea
+                id="scheduleDescription"
+                value={formData.scheduleDescription}
+                onChange={handleChange}
+                className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formerror.scheduleDescription ? "border-red-500" : ""
+                }`}
+                rows="4"
+                placeholder="Schedule Description"
+              ></textarea>
+              {formerror.scheduleDescription && (
+                <p className="text-red-500 text-sm mt-1">
+                  {formerror.scheduleDescription}
+                </p>
+              )}
+            </div>
+          </div>*/}
+
+          {/* Add Another Schedule and Submit Buttons */}
           <div className="flex justify-end">
-            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              {id ? "Update" : "Submit"}
+            {/*<button
+              type="button"
+              onClick={handleAddSchedule}
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 mr-4"
+            >
+              Add Another Schedule
+            </button>*/}
+            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-600 transition duration-200">
+              Submit
             </button>
           </div>
         </form>
@@ -331,4 +387,4 @@ function UserAddEdit() {
   );
 }
 
-export default UserAddEdit;
+export default AddEditAvailability;

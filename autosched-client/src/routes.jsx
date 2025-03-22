@@ -10,6 +10,7 @@ import MainContent from "./components/shared/Maincontent";
 import ScheduleForm from "./components/Schedule/ScheduleForm";
 import PresentationRoutes from "./components/presentations/presentation.routes";
 import ExaminarAvailability from "./components/availability/ExaminarAvailability";
+import AvailabilityRoutes from "./components/availability/availability.routes";
 
 const AppRoute = () => {
   return (
@@ -21,7 +22,7 @@ const AppRoute = () => {
           <Route path="/users/*" element={<UserRoutes />} />
           <Route path="/schedules/*" element={<ScheduleRoutes />} />
           <Route path="/presentations/*" element={<PresentationRoutes />} />
-          <Route path="/availability/*" element={<ExaminarAvailability />} />
+          <Route path="/availability/*" element={<AvailabilityRoutes />} />
         </Routes>
       </div>
     </>
