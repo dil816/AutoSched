@@ -58,6 +58,8 @@ namespace AutoSched_Service.Controllers
             availability.StartTime = request.StartTime;
             availability.EndTime = request.EndTime;
             availability.IsAvailable = request.IsAvailable;
+            availability.ExaminarName = request.ExaminarName;
+            availability.Date = request.Date;
 
             await _appDbContext.SaveChangesAsync();
 
