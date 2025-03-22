@@ -1,102 +1,165 @@
-import React, { useState } from "react";
+// autosched-client/src/components/Login1.jsx
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import useLogin from "../../hooks/useLogin";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"; // Install @heroicons/react for icons
 
 const Login1 = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const { login, error, isLoading } = useLogin();
 
-  const handleSignup = async (e) => {
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  // Handle form submission
+  const handleLogin = async (e) => {
     e.preventDefault();
-    //console.log(email, password);
-    await login(email, password);
+
+    // Client-side validation
+    const newErrors = {};
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+    if (!formData.password || formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    await login(formData.email, formData.password);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-cyan-400 via-purple-500 to-indigo-900">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 relative overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-pink-400/20 animate-pulse"></div>
+      <div className="absolute top-0 left-0 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
+
+      {/* Form Container */}
+      <div className="relative z-10 bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-white/20">
+        <h2 className="text-3xl font-bold text-center mb-6 text-white drop-shadow-lg">
           Sign In
         </h2>
-        {/*<div className="flex justify-center space-x-4 mb-6">
-          <button className="flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg"
-              alt="GitHub"
-              className="w-6 h-6 mr-2"
-            />
-            GitHub
-          </button>
-          <button className="flex items-center bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-              alt="Google"
-              className="w-6 h-6 mr-2"
-            />
-            Google
-          </button>
-        </div>*/}
-        <div className="text-center text-gray-500 mb-6">
-          sign in with credentials
-        </div>
-        <form onSubmit={handleSignup}>
-          <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-gray-700 text-sm font-bold mb-2"
-            >
-              Email
-            </label>
-            <input
-              type="text"
-              id="email"
-              value={email}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Enter your email"
-              onChange={(e) => setEmail(e.target.value)}
-            />
+        <p className="text-center text-gray-200 mb-8">
+          Sign in with your credentials
+        </p>
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-100 mb-2"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-white/20 border border-gray-300/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                placeholder="Enter your email"
+              />
+              {errors.email && (
+                <p className="text-red-400 text-sm mt-1 animate-fadeIn">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+            <div className="relative">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-100 mb-2"
+              >
+                Password
+              </label>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                id="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-white/20 border border-gray-300/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-10 text-gray-400 hover:text-gray-200 focus:outline-none"
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
+              {errors.password && (
+                <p className="text-red-400 text-sm mt-1 animate-fadeIn">
+                  {errors.password}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-gray-700 text-sm font-bold mb-2"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Enter your password"
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          {/*<div className="flex items-center justify-between mb-6">
-            <label className="flex items-center text-sm text-gray-700">
-              <input type="checkbox" className="mr-2 leading-tight" />
-              <span>Remember me</span>
-            </label>
-            <a href="#" className="text-sm text-purple-600 hover:underline">
-              Forgot password?
-            </a>
-          </div>*/}
           <button
             disabled={isLoading}
-            className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-200"
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
           >
-            Sign in
+            {isLoading ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-2 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            ) : null}
+            {isLoading ? "Signing In..." : "Sign In"}
           </button>
           {error && (
-            <div className="p-2.5 bg-red-100 border border-red-500 text-red-500 rounded-md my-5">
+            <div className="p-3 bg-red-100/80 border border-red-500 text-red-600 rounded-lg mt-4 text-center animate-fadeIn">
               {error}
             </div>
           )}
         </form>
-        <div className="text-center mt-4 text-sm text-gray-600">
-          <Link className="text-purple-600 hover:underline" to="/signup">
-            Create new account
+        <div className="text-center mt-6 text-sm text-gray-200">
+          Don’t have an account?{" "}
+          <Link
+            className="text-purple-300 hover:text-purple-200 transition-colors duration-200"
+            to="/signup"
+          >
+            Sign up
           </Link>
         </div>
       </div>
