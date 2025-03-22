@@ -1,103 +1,167 @@
 import React, { useEffect, useState } from "react";
 import { Setting2, Trash } from "iconsax-react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 function AddEditSchedule() {
   const { id } = useParams();
-  const [schedules, setSchedules] = useState([]);
+  const navigate = useNavigate();
+  const [presentation, setPresentation] = useState([]);
   const [formData, setFormData] = useState({
-    date: "",
-    timeslot: "",
-    presentation: "",
-    moduleName: "",
-    scheduleDescription: "",
+    newDate: "",
+    reason: "",
+    status: "",
+    presentationId: null,
   });
-  const [formerror, setFormError] = useState({
-    date: "",
-    timeslot: "",
-    presentation: "",
-    moduleName: "",
-    scheduleDescription: "",
+  const [formError, setFormError] = useState({
+    newDate: "",
+    reason: "",
+    status: "",
+    presentationId: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (id) {
       getScheduleDetails(parseInt(id));
     }
+    getPresentationslist();
   }, [id]);
 
-  const getScheduleDetails = (id) => {
-    console.log(id);
+  const getScheduleDetails = async (id) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5008/api/Reschedule/${id}`
+      );
+      const data = await response.json();
+      setFormData({
+        presentationId: data.presentationDetails.id,
+        newDate: data.newDate.split("T")[0], // Format date for input
+        status: data.status,
+        reason: data.reason,
+      });
+    } catch (error) {
+      console.error("Error fetching schedule details:", error);
+    }
+  };
+
+  const getPresentationslist = async () => {
+    try {
+      const response = await fetch("http://localhost:5008/api/Presentation");
+      const data = await response.json();
+      setPresentation(data);
+    } catch (error) {
+      console.error("Error fetching presentations:", error);
+    }
   };
 
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData({ ...formData, [id]: value });
-    setFormError((preverror) => ({ ...preverror, [id]: "" }));
+    setFormError((prevError) => ({ ...prevError, [id]: "" }));
   };
 
   const validateForm = () => {
-    const error = {};
-    if (!formData.date) {
-      error.date = "date required";
-    }
-    if (!formData.timeslot) {
-      error.timeslot = "timeslot required";
-    }
-    if (!formData.presentation) {
-      error.presentation = "presentation required";
-    }
-    if (!formData.moduleName) {
-      error.moduleName = "moduleName required";
-    }
-    if (!formData.scheduleDescription) {
-      error.scheduleDescription = "scheduleDescription required";
+    const errors = {};
+
+    // Date validation
+    if (!formData.newDate) {
+      errors.newDate = "Date is required";
+    } else {
+      const selectedDate = new Date(formData.newDate);
+      const today = new Date();
+      if (selectedDate < today.setHours(0, 0, 0, 0)) {
+        errors.newDate = "Date cannot be in the past";
+      }
     }
 
-    setFormError(error);
-    return Object.keys(error).length === 0;
+    // Reason validation
+    if (!formData.reason.trim()) {
+      errors.reason = "Reason is required";
+    } else if (formData.reason.length < 5) {
+      errors.reason = "Reason must be at least 5 characters";
+    } else if (formData.reason.length > 500) {
+      errors.reason = "Reason cannot exceed 500 characters";
+    }
+
+    // Status validation
+    if (!formData.status) {
+      errors.status = "Please select a status";
+    } else if (!["approve", "reject"].includes(formData.status)) {
+      errors.status = "Invalid status selection";
+    }
+
+    // Presentation validation
+    if (!formData.presentationId) {
+      errors.presentationId = "Please select a presentation";
+    }
+
+    setFormError(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(validateForm());
-    if (validateForm()) {
-      setSchedules([...schedules, formData]);
-      console.log(schedules);
-      setFormData({
-        day: "",
-        timeslot: "",
-        presentation: "",
-        moduleName: "",
-        scheduleDescription: "",
-      });
-      setFormError({});
-    }
-  };
 
-  // Remove a schedule from the list
-  /*const handleRemoveSchedule = (index) => {
-    setSchedules(schedules.filter((_, i) => i !== index));
-  };*/
-
-  // Handle final submission of all schedules
-  /*const handleSubmit = (e) => {
-    e.preventDefault();
-    if (schedules.length === 0) {
-      alert("Please add at least one schedule before submitting.");
+    if (!validateForm()) {
       return;
     }
-    console.log("Submitting all schedules:", schedules);
-    // Here you can send the data to an API or perform other actions
-    setSchedules([]); // Clear the list after submission
-  };*/
+
+    setIsSubmitting(true);
+    try {
+      if (id) {
+        const response = await fetch(
+          `http://localhost:5008/api/Reschedule/${id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to update schedule");
+        }
+      } else {
+        const response = await fetch("http://localhost:5008/api/Reschedule", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create schedule");
+        }
+      }
+
+      // Reset form and navigate on success
+      setFormData({
+        newDate: "",
+        reason: "",
+        status: "",
+        presentationId: null,
+      });
+      setFormError({});
+      navigate("/schedules");
+    } catch (error) {
+      console.error("Submission error:", error);
+      // You could add a user-facing error message here
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg mb-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold text-white">Add Schedule</h2>
+          <h2 className="text-2xl font-semibold text-white">
+            {id ? "Edit Reschedule" : "Add Reschedule"}
+          </h2>
           <button className="flex items-center px-4 py-2 bg-white text-blue-500 rounded-lg hover:bg-gray-100 transition duration-200">
             <Setting2 size="20" color="#3b82f6" className="mr-2" />
             Settings
@@ -111,101 +175,89 @@ function AddEditSchedule() {
           {/* Schedule Information Section */}
           <div>
             <h3 className="text-sm font-medium text-gray-500 uppercase mb-4">
-              Schedule Information
+              Reschedule Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Day */}
+              {/* New Date */}
               <div>
                 <label
                   className="block text-gray-700 font-medium mb-2"
-                  htmlFor="day"
+                  htmlFor="newDate"
                 >
-                  Date
+                  New Date
                 </label>
                 <input
                   type="date"
-                  id="date"
-                  value={formData.date}
+                  id="newDate"
+                  value={formData.newDate}
                   onChange={handleChange}
                   className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    formerror.date ? "border-red-500" : ""
+                    formError.newDate ? "border-red-500" : ""
                   }`}
+                  disabled={isSubmitting}
                 />
-                {formerror.date && (
-                  <p className="text-red-500 text-sm mt-1">{formerror.date}</p>
-                )}
-              </div>
-
-              {/* Timeslot */}
-              <div>
-                <label
-                  className="block text-gray-700 font-medium mb-2"
-                  htmlFor="timeslot"
-                >
-                  Timeslot
-                </label>
-                <input
-                  type="time"
-                  id="timeslot"
-                  value={formData.timeslot}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    formerror.timeslot ? "border-red-500" : ""
-                  }`}
-                />
-                {formerror.timeslot && (
+                {formError.newDate && (
                   <p className="text-red-500 text-sm mt-1">
-                    {formerror.timeslot}
+                    {formError.newDate}
                   </p>
                 )}
               </div>
 
-              {/* Professor Name */}
+              {/* Status */}
               <div>
                 <label
                   className="block text-gray-700 font-medium mb-2"
-                  htmlFor="presentation"
+                  htmlFor="status"
                 >
-                  Presentations
+                  Status
                 </label>
-                <input
-                  type="text"
-                  id="presentation"
-                  value={formData.presentation}
+                <select
+                  id="status"
+                  value={formData.status}
                   onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    formerror.presentation ? "border-red-500" : ""
+                  className={`w-full p-3 border rounded-lg ${
+                    formError.status ? "border-red-500" : ""
                   }`}
-                  placeholder="Presentations"
-                />
-                {formerror.presentation && (
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select status</option>
+                  <option value="approve">Approve</option>
+                  <option value="reject">Reject</option>
+                </select>
+                {formError.status && (
                   <p className="text-red-500 text-sm mt-1">
-                    {formerror.presentation}
+                    {formError.status}
                   </p>
                 )}
               </div>
 
-              {/* Module Name */}
+              {/* Presentation */}
               <div>
                 <label
                   className="block text-gray-700 font-medium mb-2"
-                  htmlFor="moduleName"
+                  htmlFor="presentationId"
                 >
-                  Module Name
+                  Presentation
                 </label>
-                <input
-                  type="text"
-                  id="moduleName"
-                  value={formData.moduleName}
+                <select
+                  id="presentationId"
+                  value={formData.presentationId || ""}
                   onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    formerror.moduleName ? "border-red-500" : ""
+                  className={`w-full p-3 border rounded-lg ${
+                    formError.presentationId ? "border-red-500" : ""
                   }`}
-                  placeholder="Module Name"
-                />
-                {formerror.moduleName && (
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select presentation</option>
+                  {presentation.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
+                {formError.presentationId && (
                   <p className="text-red-500 text-sm mt-1">
-                    {formerror.moduleName}
+                    {formError.presentationId}
                   </p>
                 )}
               </div>
@@ -214,81 +266,42 @@ function AddEditSchedule() {
 
           {/* Schedule Description Section */}
           <div>
-            {/*<h3 className="text-sm font-medium text-gray-500 uppercase mb-4">
-              Description
-            </h3>*/}
-            <div>
-              <label
-                className="block text-gray-700 font-medium mb-2"
-                htmlFor="scheduleDescription"
-              >
-                Schedule Description
-              </label>
-              <textarea
-                id="scheduleDescription"
-                value={formData.scheduleDescription}
-                onChange={handleChange}
-                className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  formerror.scheduleDescription ? "border-red-500" : ""
-                }`}
-                rows="4"
-                placeholder="Schedule Description"
-              ></textarea>
-              {formerror.scheduleDescription && (
-                <p className="text-red-500 text-sm mt-1">
-                  {formerror.scheduleDescription}
-                </p>
-              )}
-            </div>
+            <label
+              className="block text-gray-700 font-medium mb-2"
+              htmlFor="reason"
+            >
+              Reason
+            </label>
+            <textarea
+              id="reason"
+              value={formData.reason}
+              onChange={handleChange}
+              className={`w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                formError.reason ? "border-red-500" : ""
+              }`}
+              rows="4"
+              placeholder="Enter reason for rescheduling"
+              disabled={isSubmitting}
+            ></textarea>
+            {formError.reason && (
+              <p className="text-red-500 text-sm mt-1">{formError.reason}</p>
+            )}
           </div>
 
-          {/* Add Another Schedule and Submit Buttons */}
+          {/* Submit Button */}
           <div className="flex justify-end">
-            {/*<button
-              type="button"
-              onClick={handleAddSchedule}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 mr-4"
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 ${
+                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              Add Another Schedule
-            </button>*/}
-            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-600 transition duration-200">
-              Submit
+              {isSubmitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </form>
       </div>
-
-      {/* List of Added Schedules */}
-      {/*{schedules.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Added Schedules
-          </h3>
-          <ul className="space-y-4">
-            {schedules.map((schedule, index) => (
-              <li
-                key={index}
-                className="flex justify-between items-center p-4 border rounded-lg"
-              >
-                <div>
-                  <p className="text-gray-800 font-medium">
-                    {schedule.day} at {schedule.timeslot}
-                  </p>
-                  <p className="text-gray-500 text-sm">
-                    {schedule.professorName} - {schedule.moduleName}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleRemoveSchedule(index)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash size="20" color="#ef4444" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}*/}
     </main>
   );
 }
