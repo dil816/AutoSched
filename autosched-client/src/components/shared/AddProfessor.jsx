@@ -43,7 +43,7 @@ const AddProfessor = () => {
                 href="#"
                 className="flex items-center p-2 text-indigo-200 hover:bg-indigo-700 rounded"
               >
-                <span className="mr-2">📅</span> Add Schedule
+                <span className="mr-2">📅</span> Add ReSchedule
               </a>
             </li>
             <li className="mb-4">
@@ -83,7 +83,7 @@ const AddProfessor = () => {
                 href="#"
                 className="flex items-center p-2 text-indigo-200 hover:bg-indigo-700 rounded"
               >
-                <span className="mr-2">📅</span> Schedule
+                <span className="mr-2">📅</span> ReSchedule
               </a>
             </li>
             <li className="mb-4">

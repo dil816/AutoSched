@@ -145,7 +145,7 @@ function AddEditReSchedule() {
         presentationId: null,
       });
       setFormError({});
-      navigate("/schedules");
+      navigate("/reschedules");
     } catch (error) {
       console.error("Submission error:", error);
       // You could add a user-facing error message here
@@ -160,7 +160,7 @@ function AddEditReSchedule() {
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg mb-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold text-white">
-            {id ? "Edit Reschedule" : "Add Reschedule"}
+            {id ? "Edit Schedule" : "Add Schedule"}
           </h2>
           <button className="flex items-center px-4 py-2 bg-white text-blue-500 rounded-lg hover:bg-gray-100 transition duration-200">
             <Setting2 size="20" color="#3b82f6" className="mr-2" />
@@ -172,7 +172,7 @@ function AddEditReSchedule() {
       {/* Form */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Schedule Information Section */}
+          {/* ReSchedule Information Section */}
           <div>
             <h3 className="text-sm font-medium text-gray-500 uppercase mb-4">
               Reschedule Information
@@ -264,7 +264,7 @@ function AddEditReSchedule() {
             </div>
           </div>
 
-          {/* Schedule Description Section */}
+          {/* ReSchedule Description Section */}
           <div>
             <label
               className="block text-gray-700 font-medium mb-2"

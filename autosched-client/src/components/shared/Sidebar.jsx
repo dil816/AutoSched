@@ -4,18 +4,19 @@ import {
   Category, // Dashboard
   UserAdd, // Add Professor
   Star1, // Icons
-  CalendarAdd, // Add Schedule
+  CalendarAdd, // Add ReSchedule
   Building, // Add Room
   Book, // Add Course
   DocumentText, // Course
   Teacher, // Professor
   Home, // Room
-  Clock, // Schedule
+  Clock, // ReSchedule
   Key, // Login
   Setting2, // Settings
   Profile, // Profile
   Document, // Reports
-  Chart, // Analytics
+  Chart,
+  Calendar, // Analytics
 } from "iconsax-react";
 import { Link } from "react-router-dom";
 
@@ -43,9 +44,14 @@ function Sidebar() {
     },
 
     {
-      path: "/schedules",
-      name: "Schedule",
+      path: "/reschedules",
+      name: "Reschedule",
       icon: <Clock size="20" color="#697689" />,
+    },
+    {
+      path: "/schedules",
+      name: "schedule",
+      icon: <Calendar size="20" color="#697689" />,
     },
     {
       path: "/reports",

@@ -1,17 +1,13 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import Schedule from "./Schedule";
-import AddSchedule from "./AddEditReSchedule.jsx";
-import ScheduleForm from "./ScheduleForm";
-import AddEditSchedule from "./AddEditReSchedule.jsx";
-import ReSchedule from "./ReSchedule";
 import AddEditReSchedule from "./AddEditReSchedule.jsx";
+import ReSchedule from "./ReSchedule.jsx";
 
-const ScheduleRoutes = () => {
+const RescheduleRoutes = () => {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Schedule />} />
+        <Route path="/" element={<ReSchedule />} />
         <Route path="/addreschedule" element={<AddEditReSchedule />} />
         <Route path="/editreschedule/:id" element={<AddEditReSchedule />} />
       </Routes>
@@ -19,4 +15,4 @@ const ScheduleRoutes = () => {
   );
 };
 
-export default ScheduleRoutes;
+export default RescheduleRoutes;

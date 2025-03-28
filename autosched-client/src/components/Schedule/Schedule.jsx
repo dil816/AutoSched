@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAuthContext from "../../hooks/useAuthContext";
+import useAuthContext from "../../hooks/useAuthContext.jsx";
+import { SearchNormal1 } from "iconsax-react";
 
-const Schedule = () => {
+const ReSchedule = () => {
   const { user } = useAuthContext();
   const navigate = useNavigate();
   const [schduleData, setSchduleData] = useState([]);
@@ -33,11 +34,9 @@ const Schedule = () => {
       {/* Header Section */}
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-gray-800">
-          User management
+          Schedules management
         </h2>
-        <p className="text-gray-500 mt-1">
-          Manage your team members and their account permissions here.
-        </p>
+        <p className="text-gray-500 mt-1">Manage your Schedules.</p>
       </div>
 
       {/* Filters and Actions */}
@@ -52,7 +51,9 @@ const Schedule = () => {
               placeholder="Search"
               className="pl-8 pr-4 py-2 border rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="absolute left-2 top-2.5 text-gray-400">🔍</span>
+            <span className="absolute left-2 top-2.5 text-gray-400">
+              <SearchNormal1 size="20" color="#697689" />
+            </span>
           </div>
           <button className="flex items-center px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">
             <span className="mr-2">🛠️</span> Filters
@@ -75,10 +76,12 @@ const Schedule = () => {
                 <input type="checkbox" className="rounded" />
               </th>
               <th className="py-3 px-4">Presentation</th>
+              <th className="py-3 px-4">Date</th>
               <th className="py-3 px-4">Students</th>
-              <th className="py-3 px-4">Examinars</th>
+              <th className="py-3 px-4">Examiners</th>
               <th className="py-3 px-4">StartTime</th>
               <th className="py-3 px-4">End Time</th>
+              <th className="py-3 px-4">Description</th>
               <th className="py-3 px-4"></th>
             </tr>
           </thead>
@@ -96,9 +99,12 @@ const Schedule = () => {
                     <p className="text-gray-800">
                       {schedule.presentation.presentationName}
                     </p>
-                    <p className="text-gray-500 text-sm">test</p>
+                    <p className="text-gray-500 text-sm">
+                      {schedule.presentation.type}
+                    </p>
                   </div>
                 </td>
+                <td className="py-3 px-4 text-gray-600">{schedule.date}</td>
                 <td className="py-3 px-4">
                   <div className="flex space-x-2">
                     {schedule.examinars.map((exm, i) => (
@@ -128,6 +134,9 @@ const Schedule = () => {
                 </td>
                 <td className="py-3 px-4 text-gray-600">{schedule.endTime}</td>
                 <td className="py-3 px-4 text-gray-600">
+                  {schedule.description}
+                </td>
+                <td className="py-3 px-4 text-gray-600">
                   {/*{user.active && (
                     <span className="text-green-500 font-medium">Active</span>
                   )}*/}
@@ -142,4 +151,4 @@ const Schedule = () => {
   );
 };
 
-export default Schedule;
+export default ReSchedule;

@@ -25,7 +25,7 @@ const ReSchedule = () => {
   }, [user]);
 
   const handleAddSchedule = () => {
-    navigate("/schedules/addschedule");
+    navigate("/reschedules/addreschedule");
   };
 
   const handledelete = async (id) => {
@@ -140,7 +140,7 @@ const ReSchedule = () => {
                 <td className="py-3 px-4 text-gray-600">{schedule.status}</td>
                 <td className="py-3 px-4 text-gray-600">{schedule.reason}</td>
                 <td className="py-3 px-4 text-gray-600">
-                  <Link to={`/schedules/editschedule/${schedule.id}`}>
+                  <Link to={`/reschedules/editreschedule/${schedule.id}`}>
                     Update
                   </Link>
                 </td>

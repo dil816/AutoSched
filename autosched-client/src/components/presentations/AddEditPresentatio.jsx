@@ -274,7 +274,7 @@ function AddEditPresentation() {
             
           </div>
 
-          {/* Schedule Description Section */}
+          {/* ReSchedule Description Section */}
           <div>
             {/*<h3 className="text-sm font-medium text-gray-500 uppercase mb-4">
               Description
@@ -304,14 +304,14 @@ function AddEditPresentation() {
             </div>
           </div>
 
-          {/* Add Another Schedule and Submit Buttons */}
+          {/* Add Another ReSchedule and Submit Buttons */}
           <div className="flex justify-end">
             {/*<button
               type="button"
               onClick={handleAddSchedule}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 mr-4"
             >
-              Add Another Schedule
+              Add Another ReSchedule
             </button>*/}
             <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-600 transition duration-200">
               Submit
