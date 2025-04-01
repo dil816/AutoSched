@@ -8,7 +8,7 @@
         public TimeSpan EndTime { get; set; }
         public string Description { get; set; } = String.Empty;
         public ScheduledPresentation? Presentation { get; set; }
-        public List<ScheduledUsers> Examinars { get; set; } = [];
+        public List<ScheduledUsers> Examiners { get; set; } = [];
         public List<ScheduledUsers> Students { get; set; } = [];
     }
 
@@ -16,6 +16,7 @@
     {
         public string Id { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty ;
+        public string Email {  get; set; } = string.Empty ;
     }
 
     public class ScheduledPresentation

@@ -7,6 +7,6 @@
         public TimeSpan EndTime { get; set; }
         public string Description { get; set; } = string.Empty;
         public int PresentationId { get; set; }
-        public List<string> UserId { get; set; } = [];
+        // List<string> UserId { get; set; } = [];
     }
 }

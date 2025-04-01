@@ -21,13 +21,30 @@ namespace AutoSched_Service.Controllers
             _authServices = authServices;
         }
 
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ScheduleResponseDto>>> GetSchedules()
         {
-            var schedule = await _appDbContext.Schedules
+            //for user related schdule list
+            var userScheduleIdList = await _appDbContext.Users
+                .AsNoTracking()
+                .Where(u => u.Id == _authServices.GetUserId())
+                .Include(u => u.Schedules)
+                .SelectMany(u => u.Schedules)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            if (userScheduleIdList is null)
+            {
+                return NotFound();
+            }
+
+            List<ScheduleResponseDto> response = _authServices.GetUserRole().Equals("1") ?
+            await _appDbContext.Schedules
+                .AsNoTracking()
+                .AsSplitQuery()
                 .Include(s => s.Users)
                 .Include(s => s.Presentation)
-                .AsNoTracking()
                 .Select(s => new ScheduleResponseDto
                 {
                     Id = s.Id,
@@ -37,16 +54,17 @@ namespace AutoSched_Service.Controllers
                     Description = s.Description,
                     Presentation = s.Presentation != null ? new ScheduledPresentation
                     {
-                        Id = s.Id,
+                        Id = s.Presentation.Id,
                         PresentationName = s.Presentation.Title,
                         Type = s.Presentation.Type
                     } : null,
-                    Examinars = s.Users
+                    Examiners = s.Users
                     .Where(u => u.Role == "2")
                     .Select(u => new ScheduledUsers
                     {
                         Id = u.RowId.ToString(),
-                        UserName = u.Username
+                        UserName = u.Username,
+                        Email = u.Email
                     })
                     .ToList(),
                     Students = s.Users
@@ -54,22 +72,63 @@ namespace AutoSched_Service.Controllers
                     .Select(u => new ScheduledUsers
                     {
                         Id = u.RowId.ToString(),
-                        UserName = u.Username
+                        UserName = u.Username,
+                        Email = u.Email
+                    })
+                    .ToList(),
+                })
+                .ToListAsync()
+                :
+                await _appDbContext.Schedules
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(s => s.Users)
+                .Include(s => s.Presentation)
+                .Where(u => userScheduleIdList.Contains(u.Id))
+                .Select(s => new ScheduleResponseDto
+                {
+                    Id = s.Id,
+                    Date = s.Date,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime,
+                    Description = s.Description,
+                    Presentation = s.Presentation != null ? new ScheduledPresentation
+                    {
+                        Id = s.Presentation.Id,
+                        PresentationName = s.Presentation.Title,
+                        Type = s.Presentation.Type
+                    } : null,
+                    Examiners = s.Users
+                    .Where(u => u.Role == "2")
+                    .Select(u => new ScheduledUsers
+                    {
+                        Id = u.RowId.ToString(),
+                        UserName = u.Username,
+                        Email = u.Email
+                    })
+                    .ToList(),
+                    Students = s.Users
+                    .Where(u => u.Role == "3")
+                    .Select(u => new ScheduledUsers
+                    {
+                        Id = u.RowId.ToString(),
+                        UserName = u.Username,
+                        Email = u.Email
                     })
                     .ToList(),
                 })
                 .ToListAsync();
 
-            return Ok(schedule);
+            return Ok(response);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ScheduleResponseDto>> GetScheduleById(int id)
         {
             var schedule = await _appDbContext.Schedules
+                .AsNoTracking()
                 .Include(s => s.Users)
                 .Include(s => s.Presentation)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (schedule is null)
@@ -90,12 +149,13 @@ namespace AutoSched_Service.Controllers
                     PresentationName = schedule.Presentation.Title,
                     Type = schedule.Presentation.Type,
                 } : null,
-                Examinars = schedule.Users
+                Examiners = schedule.Users
                     .Where(u => u.Role == "2")
                     .Select(u => new ScheduledUsers
                     {
                         Id = u.RowId.ToString(),
-                        UserName = u.Username
+                        UserName = u.Username,
+                        Email = u.Email
                     })
                     .ToList(),
                 Students = schedule.Users
@@ -103,7 +163,8 @@ namespace AutoSched_Service.Controllers
                     .Select(u => new ScheduledUsers
                     {
                         Id = u.RowId.ToString(),
-                        UserName = u.Username
+                        UserName = u.Username,
+                        Email = u.Email
                     })
                     .ToList(),
             };
@@ -127,14 +188,14 @@ namespace AutoSched_Service.Controllers
                 return BadRequest();
             }
 
-            var users = await _appDbContext.Users
-                .Where(u => request.UserId.Contains(u.RowId.ToString()))
-                .ToListAsync();
+            //var users = await _appDbContext.Users
+            //    .Where(u => request.UserId.Contains(u.RowId.ToString()))
+            //    .ToListAsync();
 
-            if (users.Count != request.UserId.Count)
-            {
-                return BadRequest("some users not in db");
-            }
+            //if (users.Count != request.UserId.Count)
+            //{
+            //    return BadRequest("some users not in db");
+            //}
 
             Schedule schedule = new Schedule
             {
@@ -144,11 +205,109 @@ namespace AutoSched_Service.Controllers
                 Description = request.Description,
                 PresentationId = request.PresentationId,
                 Presentation = presentation,
-                Users = users
+                //Users = users
             };
             _appDbContext.Schedules.Add(schedule);
             await _appDbContext.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpPost("AssignScheduleToUser")]
+        public async Task<IActionResult> AssignScheduleToUser(AssignScheduleToUserRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.Users)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+
+            var users = await _appDbContext.Users           //check requset usrs in db
+                .Where(u => request.UserId.Contains(u.RowId.ToString()))
+                .ToListAsync();
+
+            if (users.Count != request.UserId.Count)
+            {
+                return BadRequest("some users not in db");
+            }
+
+            var existingScheduleUsersId = schedule.Users   //get existing users list in this requested schedule
+                .Select(u => u.RowId.ToString())
+                .ToList();
+
+            var newUsersId = request.UserId    // Actual users to add
+                .Except(existingScheduleUsersId)
+                .ToList();
+
+            if (newUsersId.Count == 0)
+            {
+                return NoContent();
+            }
+
+            var newUsersToAdd = users
+                .Where(u => newUsersId.Contains(u.RowId.ToString()))
+                .ToList();
+
+            foreach (var item in newUsersToAdd)
+            {
+                schedule.Users.Add(item);
+            }
+
+            await _appDbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPost("ScheduleToUserUnassign")]
+        public async Task<IActionResult> AssignScheduleToUser(ScheduleToUserUnassignRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.Users)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+
+            var users = await _appDbContext.Users           //check requset usrs to unassign in db
+                .Where(u => request.UserId.Contains(u.RowId.ToString()))
+                .ToListAsync();
+
+            if (users.Count != request.UserId.Count)
+            {
+                return BadRequest("some users not in db");
+            }
+
+            //var existingScheduleUsersId = schedule.Users   //get existing users list in this requested schedule
+            //    .Select(u => u.RowId.ToString())
+            //    .ToList();
+
+            //var remainingUsersId = existingScheduleUsersId    // Actual users to add after removed reqested users
+            //    .Except(request.UserId)
+            //    .ToList();
+
+            //if (remainingUsersId.Count == 0)
+            //{
+            //    return NoContent();
+            //}
+
+            //var existingUsersToRemove = users
+            //    .Where(u => remainingUsersId.Contains(u.RowId.ToString()))
+            //    .ToList();
+
+            foreach (var item in users)
+            {
+                schedule.Users.Remove(item);
+            }
+
+            await _appDbContext.SaveChangesAsync();
+
+            return NoContent();
         }
 
         [HttpPut("{id}")]
@@ -173,14 +332,14 @@ namespace AutoSched_Service.Controllers
                 return BadRequest();
             }
 
-            var users = await _appDbContext.Users
-                .Where(u => request.UserId.Contains(u.RowId.ToString()))
-                .ToListAsync();
+            //var users = await _appDbContext.Users
+            //    .Where(u => request.UserId.Contains(u.RowId.ToString()))
+            //    .ToListAsync();
 
-            if (users.Count != request.UserId.Count)
-            {
-                return BadRequest("some users not in db");
-            }
+            //if (users.Count != request.UserId.Count)
+            //{
+            //    return BadRequest("some users not in db");
+            //}
 
             schedule.Date = request.Date;
             schedule.StartTime = request.StartTime;
@@ -188,7 +347,7 @@ namespace AutoSched_Service.Controllers
             schedule.Description = request.Description;
             schedule.PresentationId = request.PresentationId;
             schedule.Presentation = presentation;
-            schedule.Users = users;
+            //schedule.Users = users;
 
             await _appDbContext.SaveChangesAsync();
 
