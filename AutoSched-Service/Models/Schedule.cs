@@ -10,7 +10,7 @@
 
         public int Id { get; set; }
         public DateTime Date { get; set; }
-        public TimeSpan StartTime {  get; set; }
+        public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         public string Description { get; set; } = string.Empty;
         public List<User> Users { get; set; } = []; // M:M

@@ -155,7 +155,6 @@ namespace AutoSched_Service.Services
         public string GetUserRole()
         {
             return _httpcontextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role) ?? "";
-
         }
     }
 }
