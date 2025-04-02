@@ -257,8 +257,8 @@ namespace AutoSched_Service.Controllers
             return NoContent();
         }
 
-        [HttpPost("ScheduleToUserUnassign")]
-        public async Task<IActionResult> AssignScheduleToUser(ScheduleToUserUnassignRequestDto request)
+        [HttpPost("UnAssignScheduleToUser")]
+        public async Task<IActionResult> UnAssignScheduleToUser(UnAssignScheduleToUserRequestDto request)
         {
             var schedule = await _appDbContext.Schedules
                 .Include(s => s.Users)
@@ -287,6 +287,110 @@ namespace AutoSched_Service.Controllers
             await _appDbContext.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpPost("GetUserListToAssignSchedule")]
+        public async Task<ActionResult<GetUserListToAssignScheduleResponseDto>> GetUserListToAssignSchedule(GetUserListToAssignScheduleRequestDto request)
+        {
+            GetUserListToAssignScheduleResponseDto response = new();
+
+            var currentAssignedUsers = await _appDbContext.Schedules
+                .AsNoTracking()
+                .Include(s => s.Users)
+                .Where(s => s.Id == request.ScheduleId)
+                .SelectMany(s => s.Users)
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            if (currentAssignedUsers is null)
+            {
+                return NotFound();
+            }
+
+            var notAssignedUsersList = await _appDbContext.Users
+                .AsNoTracking()
+                .Where(u => !currentAssignedUsers.Contains(u.Id) && u.Role != "1")
+                .Select(u => new UserDto
+                {
+                    Id = u.RowId.ToString(),
+                    Email = u.Email,
+                    Username = u.Username,
+                    Role = u.Role,
+                })
+                .ToListAsync();
+
+            foreach (var user in notAssignedUsersList)
+            {
+                if (user.Role == "2")
+                {
+                    response.ExaminarList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+                else if (user.Role == "3")
+                {
+                    response.StudentList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("GetUserListToUnAssignSchedule")]
+        public async Task<ActionResult<GetUserListToUnAssignScheduleResponseDto>> GetUserListToAssignSchedule(GetUserListToUnAssignScheduleRequestDto request)
+        {
+            GetUserListToUnAssignScheduleResponseDto response = new();
+
+            var AssignedUsers = await _appDbContext.Schedules
+                .AsNoTracking()
+                .Include(s => s.Users)
+                .Where(s => s.Id == request.ScheduleId)
+                .SelectMany(s => s.Users)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id.ToString(),
+                    Email = u.Email,
+                    Username = u.Username,
+                    Role = u.Role,
+                })
+                .ToListAsync();
+
+            if (AssignedUsers is null)
+            {
+                return NotFound();
+            }
+
+            foreach (var user in AssignedUsers)
+            {
+                if (user.Role == "2")
+                {
+                    response.ExaminarList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+                else if (user.Role == "3")
+                {
+                    response.StudentList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+            }
+
+            return Ok(response);
         }
 
         [HttpPut("{id}")]
