@@ -323,7 +323,7 @@ namespace AutoSched_Service.Controllers
             {
                 if (user.Role == "2")
                 {
-                    response.ExaminarList.Add(new UserDetails
+                    response.ExaminerList.Add(new UserDetails
                     {
                         UserId = user.Id,
                         UserEmail = user.Email,
@@ -372,7 +372,7 @@ namespace AutoSched_Service.Controllers
             {
                 if (user.Role == "2")
                 {
-                    response.ExaminarList.Add(new UserDetails
+                    response.ExaminerList.Add(new UserDetails
                     {
                         UserId = user.Id,
                         UserEmail = user.Email,

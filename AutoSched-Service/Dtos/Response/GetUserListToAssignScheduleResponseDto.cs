@@ -3,7 +3,7 @@
     public class GetUserListToAssignScheduleResponseDto
     {
         public List<UserDetails> StudentList { get; set; } = [];
-        public List<UserDetails> ExaminarList { get; set; } = [];
+        public List<UserDetails> ExaminerList { get; set; } = [];
     }
 
     //common dto
