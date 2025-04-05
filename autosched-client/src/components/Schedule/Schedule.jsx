@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../hooks/useAuthContext.jsx";
 import { SearchNormal1 } from "iconsax-react";
+import UserAssign from "./UserAssign.jsx";
 
 const ReSchedule = () => {
   const { user } = useAuthContext();
   const navigate = useNavigate();
-  const [schduleData, setSchduleData] = useState([]);
+  const [scheduleData, setScheduleData] = useState([]);
+  const [scheduleDetails, setScheduleDetails] = useState({
+    id: null,
+    name: "",
+  });
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   useEffect(() => {
     const fetchSchedules = async () => {
@@ -16,8 +22,7 @@ const ReSchedule = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setSchduleData(data);
-        //dispatch({ type: "SET_WORKOUTS", payload: data });
+        setScheduleData(data);
       }
     };
     if (user) {
@@ -30,7 +35,7 @@ const ReSchedule = () => {
   };
 
   return (
-    <main className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
+    <main className={`flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]`}>
       {/* Header Section */}
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-gray-800">
@@ -43,7 +48,7 @@ const ReSchedule = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-4">
           <span className="text-gray-600 font-medium">
-            Schedules Count {schduleData.length}
+            Schedules Count {scheduleData.length}
           </span>
           <div className="relative">
             <input
@@ -86,7 +91,7 @@ const ReSchedule = () => {
             </tr>
           </thead>
           <tbody>
-            {schduleData.map((schedule, index) => (
+            {scheduleData.map((schedule, index) => (
               <tr key={index} className="border-b hover:bg-gray-50">
                 <td className="py-3 px-4">
                   <input type="checkbox" className="rounded" />
@@ -107,7 +112,7 @@ const ReSchedule = () => {
                 <td className="py-3 px-4 text-gray-600">{schedule.date}</td>
                 <td className="py-3 px-4">
                   <div className="flex space-x-2">
-                    {schedule.examinars.map((exm, i) => (
+                    {schedule.examiners.map((exm, i) => (
                       <span
                         key={i}
                         className="px-2 py-1 rounded text-xs bg-green-100 text-green-800 "
@@ -140,13 +145,38 @@ const ReSchedule = () => {
                   {/*{user.active && (
                     <span className="text-green-500 font-medium">Active</span>
                   )}*/}
-                  <button className="ml-2">⋮</button>
+
+                  <Link to={`/schedules/editschedule/${schedule.id}`}>
+                    Update
+                  </Link>
+
+                  {/*<button className="ml-2">⋮</button>*/}
+                </td>
+                <td className="py-3 px-4 text-gray-600">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPopupOpen(true);
+                      setScheduleDetails({
+                        id: schedule.id,
+                        name: schedule.presentation.presentationName,
+                      });
+                    }}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 mr-4"
+                  >
+                    Assign
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <UserAssign
+        schedule={scheduleDetails}
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+      />
     </main>
   );
 };
