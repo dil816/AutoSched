@@ -356,7 +356,7 @@ namespace AutoSched_Service.Controllers
                 .SelectMany(s => s.Users)
                 .Select(u => new UserDto
                 {
-                    Id = u.Id.ToString(),
+                    Id = u.RowId.ToString(),
                     Email = u.Email,
                     Username = u.Username,
                     Role = u.Role,
