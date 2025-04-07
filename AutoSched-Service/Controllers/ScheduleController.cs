@@ -312,7 +312,7 @@ namespace AutoSched_Service.Controllers
                 .Where(u => !currentAssignedUsers.Contains(u.Id) && u.Role != "1")
                 .Select(u => new UserDto
                 {
-                    Id = u.RowId.ToString(),
+                    Id = u.RowId.ToString("D"),
                     Email = u.Email,
                     Username = u.Username,
                     Role = u.Role,
@@ -356,7 +356,7 @@ namespace AutoSched_Service.Controllers
                 .SelectMany(s => s.Users)
                 .Select(u => new UserDto
                 {
-                    Id = u.RowId.ToString(),
+                    Id = u.RowId.ToString("D"),
                     Email = u.Email,
                     Username = u.Username,
                     Role = u.Role,
