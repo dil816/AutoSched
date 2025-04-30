@@ -140,16 +140,21 @@ namespace AutoSched_Service.Services
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
 
-        public string? CurrentUserId()
+        public int? GetUserId()
         {
-            return _httpcontextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userIdString = _httpcontextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            if (int.TryParse(userIdString, out int userId))
+            {
+                return userId;
+            }
+
+            return 0;
         }
 
-        public string? CurrentUserRole()
+        public string GetUserRole()
         {
-            return _httpcontextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
-
+            return _httpcontextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role) ?? "";
         }
     }
 }

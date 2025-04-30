@@ -3,7 +3,7 @@
     public class RescheduleResponseDto
     {
         public int Id { get; set; }
-        public DateTime NewDate { get; set; }
+        public string NewDate { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public PresentationDetails? PresentationDetails { get; set; }
