@@ -151,7 +151,7 @@ namespace AutoSched_Service.Controllers
                 Description = schedule.Description,
                 Presentation = schedule.Presentation != null ? new ScheduledPresentation
                 {
-                    Id = schedule.Id,
+                    Id = schedule.Presentation.Id,
                     PresentationName = schedule.Presentation.Title,
                     Type = schedule.Presentation.Type,
                 } : null,
@@ -442,6 +442,80 @@ namespace AutoSched_Service.Controllers
             _appDbContext.Schedules.Remove(schedule);
             await _appDbContext.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpPost("ChangeScheduleApprovalStatus")]
+        public async Task<IActionResult> ChangeScheduleApprovalStatus(ChangeScheduleApprovalStatusRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
+
+            var examinar = await _appDbContext.Users
+                .Where(u => u.Role == "2")
+                .FirstOrDefaultAsync(u => u.RowId == Guid.Parse(request.ExaminarId));
+
+            if (schedule is null || examinar is null)
+            {
+                return NotFound();
+            }
+
+            var existingscheduleApproval = await _appDbContext.ScheduleApprovals
+                .FirstOrDefaultAsync(s => s.ScheduleId == request.ScheduleId && s.ExaminarId == request.ExaminarId);
+
+            if (existingscheduleApproval != null)
+            {
+                switch (request.ApprovalStatus)
+                {
+                    case 0:
+                        existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                        existingscheduleApproval.ApprovePoint = 0;
+                        break;
+                    case 1:
+                        existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                        existingscheduleApproval.ApprovePoint++;
+                        break;
+                    case 2:
+                        existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                        existingscheduleApproval.ApprovePoint = existingscheduleApproval.ApprovePoint == 0 ? 0 : existingscheduleApproval.ApprovePoint - 1;
+                        break;
+                    default:
+                        existingscheduleApproval.ApprovalStatus = 0;
+                        break;
+                }
+
+                await _appDbContext.SaveChangesAsync();
+
+                return Ok();
+            }
+
+            ScheduleApproval scheduleApproval = new();
+
+            scheduleApproval.ExaminarId = request.ExaminarId;
+            scheduleApproval.ScheduleId = request.ScheduleId;
+            // 0 - pending, 1 - approve, 2 - rejected
+            switch (request.ApprovalStatus)
+            {
+                case 0:
+                    scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    scheduleApproval.ApprovePoint = 0;
+                    break;
+                case 1:
+                    scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    scheduleApproval.ApprovePoint++;
+                    break;
+                case 2:
+                    scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    scheduleApproval.ApprovePoint = scheduleApproval.ApprovePoint == 0 ? 0 : scheduleApproval.ApprovePoint - 1;
+                    break;
+                default:
+                    scheduleApproval.ApprovalStatus = 0;
+                    break;
+            }
+
+            _appDbContext.ScheduleApprovals.Add(scheduleApproval);
+            await _appDbContext.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }
