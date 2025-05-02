@@ -32,7 +32,8 @@ namespace AutoSched_Service.Controllers
                 response = await _appDbContext.Schedules
                     .AsNoTracking()
                     .AsSplitQuery()
-                    .Include(s => s.Users)
+                    .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
                     .Include(s => s.Presentation)
                     .Select(s => new ScheduleResponseDto
                     {
@@ -47,22 +48,23 @@ namespace AutoSched_Service.Controllers
                             PresentationName = s.Presentation.Title,
                             Type = s.Presentation.Type
                         } : null,
-                        Examiners = s.Users
-                        .Where(u => u.Role == "2")
-                        .Select(u => new ScheduledUsers
+                        Examiners = s.ScheduleUser
+                        .Where(su => su.User.Role == "2")
+                        .Select(su => new ScheduledUsers
                         {
-                            Id = u.RowId.ToString(),
-                            UserName = u.Username,
-                            Email = u.Email
+                            Id = su.User.RowId.ToString("D"),
+                            UserName = su.User.Username,
+                            Email = su.User.Email,
+                            ApprovalStatus = su.ApprovalStatus
                         })
                         .ToList(),
-                        Students = s.Users
-                        .Where(u => u.Role == "3")
-                        .Select(u => new ScheduledUsers
+                        Students = s.ScheduleUser
+                        .Where(su => su.User.Role == "3")
+                        .Select(su => new ScheduledUsers
                         {
-                            Id = u.RowId.ToString(),
-                            UserName = u.Username,
-                            Email = u.Email
+                            Id = su.User.RowId.ToString("D"),
+                            UserName = su.User.Username,
+                            Email = su.User.Email
                         })
                         .ToList(),
                     })
@@ -71,12 +73,10 @@ namespace AutoSched_Service.Controllers
             else
             {
                 //for user related schdule list
-                var userScheduleIdList = await _appDbContext.Users
+                var userScheduleIdList = await _appDbContext.ScheduleUsers
                     .AsNoTracking()
-                    .Where(u => u.Id == _authServices.GetUserId())
-                    .Include(u => u.Schedules)
-                    .SelectMany(u => u.Schedules)
-                    .Select(s => s.Id)
+                    .Where(su => su.UserId == _authServices.GetUserId())
+                    .Select(su => su.ScheduleId)
                     .ToListAsync();
 
                 if (userScheduleIdList is null)
@@ -87,7 +87,8 @@ namespace AutoSched_Service.Controllers
                 response = await _appDbContext.Schedules
                  .AsNoTracking()
                  .AsSplitQuery()
-                 .Include(s => s.Users)
+                 .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
                  .Include(s => s.Presentation)
                  .Where(u => userScheduleIdList.Contains(u.Id))
                  .Select(s => new ScheduleResponseDto
@@ -103,24 +104,25 @@ namespace AutoSched_Service.Controllers
                          PresentationName = s.Presentation.Title,
                          Type = s.Presentation.Type
                      } : null,
-                     Examiners = s.Users
-                     .Where(u => u.Role == "2")
-                     .Select(u => new ScheduledUsers
-                     {
-                         Id = u.RowId.ToString(),
-                         UserName = u.Username,
-                         Email = u.Email
-                     })
-                     .ToList(),
-                     Students = s.Users
-                     .Where(u => u.Role == "3")
-                     .Select(u => new ScheduledUsers
-                     {
-                         Id = u.RowId.ToString(),
-                         UserName = u.Username,
-                         Email = u.Email
-                     })
-                     .ToList(),
+                     Examiners = s.ScheduleUser
+                    .Where(su => su.User.Role == "2")
+                    .Select(su => new ScheduledUsers
+                    {
+                        Id = su.User.RowId.ToString("D"),
+                        UserName = su.User.Username,
+                        Email = su.User.Email,
+                        ApprovalStatus = su.ApprovalStatus
+                    })
+                    .ToList(),
+                     Students = s.ScheduleUser
+                    .Where(su => su.User.Role == "3")
+                    .Select(su => new ScheduledUsers
+                    {
+                        Id = su.User.RowId.ToString("D"),
+                        UserName = su.User.Username,
+                        Email = su.User.Email
+                    })
+                    .ToList(),
                  })
                  .ToListAsync();
             }
@@ -133,7 +135,8 @@ namespace AutoSched_Service.Controllers
         {
             var schedule = await _appDbContext.Schedules
                 .AsNoTracking()
-                .Include(s => s.Users)
+                .Include(s => s.ScheduleUser)
+                    .ThenInclude(su => su.User)
                 .Include(s => s.Presentation)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -155,24 +158,25 @@ namespace AutoSched_Service.Controllers
                     PresentationName = schedule.Presentation.Title,
                     Type = schedule.Presentation.Type,
                 } : null,
-                Examiners = schedule.Users
-                    .Where(u => u.Role == "2")
-                    .Select(u => new ScheduledUsers
-                    {
-                        Id = u.RowId.ToString(),
-                        UserName = u.Username,
-                        Email = u.Email
-                    })
-                    .ToList(),
-                Students = schedule.Users
-                    .Where(u => u.Role == "3")
-                    .Select(u => new ScheduledUsers
-                    {
-                        Id = u.RowId.ToString(),
-                        UserName = u.Username,
-                        Email = u.Email
-                    })
-                    .ToList(),
+                Examiners = schedule.ScheduleUser
+                .Where(su => su.User.Role == "2")
+                .Select(su => new ScheduledUsers
+                {
+                    Id = su.User.RowId.ToString("D"),
+                    UserName = su.User.Username,
+                    Email = su.User.Email,
+                    ApprovalStatus = su.ApprovalStatus
+                })
+                .ToList(),
+                Students = schedule.ScheduleUser
+                .Where(su => su.User.Role == "3")
+                .Select(su => new ScheduledUsers
+                {
+                    Id = su.User.RowId.ToString("D"),
+                    UserName = su.User.Username,
+                    Email = su.User.Email
+                })
+                .ToList(),
             };
 
             return Ok(response);
@@ -212,7 +216,8 @@ namespace AutoSched_Service.Controllers
         public async Task<IActionResult> AssignScheduleToUser(AssignScheduleToUserRequestDto request)
         {
             var schedule = await _appDbContext.Schedules
-                .Include(s => s.Users)
+                .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
                 .Include(s => s.Presentation)
                 .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
 
@@ -230,8 +235,8 @@ namespace AutoSched_Service.Controllers
                 return BadRequest("some users not in db");
             }
 
-            var existingScheduleUsersId = schedule.Users   //get existing users list in this requested schedule
-                .Select(u => u.RowId.ToString())
+            var existingScheduleUsersId = schedule.ScheduleUser   //get existing users list in this requested schedule
+                .Select(su => su.User.RowId.ToString())
                 .ToList();
 
             var newUsersId = request.UserId    // Actual users to add
@@ -249,7 +254,14 @@ namespace AutoSched_Service.Controllers
 
             foreach (var item in newUsersToAdd)
             {
-                schedule.Users.Add(item);
+                //schedule.Users.Add(item);
+                schedule.ScheduleUser.Add(new ScheduleUser
+                {
+                    UserId = item.Id,
+                    ScheduleId = schedule.Id,
+                    ApprovalStatus = 0, // pending by default
+                    ApprovePoint = 0
+                });
             }
 
             await _appDbContext.SaveChangesAsync();
@@ -261,7 +273,8 @@ namespace AutoSched_Service.Controllers
         public async Task<IActionResult> UnAssignScheduleToUser(UnAssignScheduleToUserRequestDto request)
         {
             var schedule = await _appDbContext.Schedules
-                .Include(s => s.Users)
+                .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
                 .Include(s => s.Presentation)
                 .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
 
@@ -281,7 +294,8 @@ namespace AutoSched_Service.Controllers
 
             foreach (var item in users)
             {
-                schedule.Users.Remove(item);
+                //schedule.Users.Remove(item);
+                schedule.ScheduleUser.RemoveAll(sc => sc.UserId == item.Id);
             }
 
             await _appDbContext.SaveChangesAsync();
@@ -294,12 +308,18 @@ namespace AutoSched_Service.Controllers
         {
             GetUserListToAssignScheduleResponseDto response = new();
 
-            var currentAssignedUsers = await _appDbContext.Schedules
+            //var currentAssignedUsers = await _appDbContext.Schedules
+            //    .AsNoTracking()
+            //    .Include(s => s.Users)
+            //    .Where(s => s.Id == request.ScheduleId)
+            //    .SelectMany(s => s.Users)
+            //    .Select(u => u.Id)
+            //    .ToListAsync();
+
+            var currentAssignedUsers = await _appDbContext.ScheduleUsers
                 .AsNoTracking()
-                .Include(s => s.Users)
-                .Where(s => s.Id == request.ScheduleId)
-                .SelectMany(s => s.Users)
-                .Select(u => u.Id)
+                .Where(su => su.ScheduleId == request.ScheduleId)
+                .Select(su => su.UserId)
                 .ToListAsync();
 
             if (currentAssignedUsers is null)
@@ -349,17 +369,16 @@ namespace AutoSched_Service.Controllers
         {
             GetUserListToUnAssignScheduleResponseDto response = new();
 
-            var AssignedUsers = await _appDbContext.Schedules
+            var AssignedUsers = await _appDbContext.ScheduleUsers
                 .AsNoTracking()
-                .Include(s => s.Users)
-                .Where(s => s.Id == request.ScheduleId)
-                .SelectMany(s => s.Users)
-                .Select(u => new UserDto
+                .Include(sc => sc.User)
+                .Where(sc => sc.ScheduleId == request.ScheduleId)
+                .Select(sc => new UserDto
                 {
-                    Id = u.RowId.ToString("D"),
-                    Email = u.Email,
-                    Username = u.Username,
-                    Role = u.Role,
+                    Id = sc.User.RowId.ToString("D"),
+                    Email = sc.User.Email,
+                    Username = sc.User.Username,
+                    Role = sc.User.Role,
                 })
                 .ToListAsync();
 
@@ -397,7 +416,8 @@ namespace AutoSched_Service.Controllers
         public async Task<IActionResult> UpdateSchedule(int id, ScheduleRequestDto request)
         {
             var schedule = await _appDbContext.Schedules
-                .Include(s => s.Users)
+                .Include(s => s.ScheduleUser)
+                        .Include(su => su.ScheduleUser)
                 .Include(s => s.Presentation)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -431,7 +451,7 @@ namespace AutoSched_Service.Controllers
         public async Task<IActionResult> DeleteSchedule(int id)
         {
             var schedule = await _appDbContext.Schedules
-                .Include(s => s.Users)
+                .Include(s => s.ScheduleUser)
                 .Include(s => s.Presentation)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -447,75 +467,85 @@ namespace AutoSched_Service.Controllers
         [HttpPost("ChangeScheduleApprovalStatus")]
         public async Task<IActionResult> ChangeScheduleApprovalStatus(ChangeScheduleApprovalStatusRequestDto request)
         {
-            var schedule = await _appDbContext.Schedules
-                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
+            var existingscheduleApproval = await _appDbContext.ScheduleUsers
+                .Include(sc => sc.User)
+                .FirstOrDefaultAsync(sc => sc.ScheduleId == request.ScheduleId && sc.User.RowId == Guid.Parse(request.ExaminarId));
 
-            var examinar = await _appDbContext.Users
-                .Where(u => u.Role == "2")
-                .FirstOrDefaultAsync(u => u.RowId == Guid.Parse(request.ExaminarId));
+            //var examinar = await _appDbContext.Users
+            //    .Where(u => u.Role == "2")
+            //    .FirstOrDefaultAsync(u => u.RowId == Guid.Parse(request.ExaminarId));
 
-            if (schedule is null || examinar is null)
+            //var res = await _appDbContext.ScheduleUsers
+            //    .Include(sc => sc.User)
+            //    .Where(sc => sc.ScheduleId == request.ScheduleId && sc.User.RowId == Guid.Parse(request.ExaminarId))
+            //    .Select(sc => sc.ApprovalStatus)
+            //    .ToListAsync();
+
+            //if (schedule is null || examinar is null)
+            //{
+            //    return NotFound();
+            //}
+
+            if (existingscheduleApproval is null)
             {
                 return NotFound();
             }
 
-            var existingscheduleApproval = await _appDbContext.ScheduleApprovals
-                .FirstOrDefaultAsync(s => s.ScheduleId == request.ScheduleId && s.ExaminarId == request.ExaminarId);
+            //var existingscheduleApproval = await _appDbContext.ScheduleApprovals
+            //    .FirstOrDefaultAsync(s => s.ScheduleId == request.ScheduleId && s.ExaminarId == request.ExaminarId);
 
-            if (existingscheduleApproval != null)
-            {
-                switch (request.ApprovalStatus)
-                {
-                    case 0:
-                        existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
-                        existingscheduleApproval.ApprovePoint = 0;
-                        break;
-                    case 1:
-                        existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
-                        existingscheduleApproval.ApprovePoint++;
-                        break;
-                    case 2:
-                        existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
-                        existingscheduleApproval.ApprovePoint = existingscheduleApproval.ApprovePoint == 0 ? 0 : existingscheduleApproval.ApprovePoint - 1;
-                        break;
-                    default:
-                        existingscheduleApproval.ApprovalStatus = 0;
-                        break;
-                }
-
-                await _appDbContext.SaveChangesAsync();
-
-                return Ok();
-            }
-
-            ScheduleApproval scheduleApproval = new();
-
-            scheduleApproval.ExaminarId = request.ExaminarId;
-            scheduleApproval.ScheduleId = request.ScheduleId;
-            // 0 - pending, 1 - approve, 2 - rejected
+            
             switch (request.ApprovalStatus)
             {
                 case 0:
-                    scheduleApproval.ApprovalStatus = request.ApprovalStatus;
-                    scheduleApproval.ApprovePoint = 0;
+                    existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    existingscheduleApproval.ApprovePoint = 0;
                     break;
                 case 1:
-                    scheduleApproval.ApprovalStatus = request.ApprovalStatus;
-                    scheduleApproval.ApprovePoint++;
+                    existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    existingscheduleApproval.ApprovePoint++;
                     break;
                 case 2:
-                    scheduleApproval.ApprovalStatus = request.ApprovalStatus;
-                    scheduleApproval.ApprovePoint = scheduleApproval.ApprovePoint == 0 ? 0 : scheduleApproval.ApprovePoint - 1;
+                    existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    existingscheduleApproval.ApprovePoint = existingscheduleApproval.ApprovePoint == 0 ? 0 : existingscheduleApproval.ApprovePoint - 1;
                     break;
                 default:
-                    scheduleApproval.ApprovalStatus = 0;
+                    existingscheduleApproval.ApprovalStatus = 0;
                     break;
             }
 
-            _appDbContext.ScheduleApprovals.Add(scheduleApproval);
             await _appDbContext.SaveChangesAsync();
 
             return Ok();
+         
+            //ScheduleApproval scheduleApproval = new();
+
+            //scheduleApproval.ExaminarId = request.ExaminarId;
+            //scheduleApproval.ScheduleId = request.ScheduleId;
+            //// 0 - pending, 1 - approve, 2 - rejected
+            //switch (request.ApprovalStatus)
+            //{
+            //    case 0:
+            //        scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+            //        scheduleApproval.ApprovePoint = 0;
+            //        break;
+            //    case 1:
+            //        scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+            //        scheduleApproval.ApprovePoint++;
+            //        break;
+            //    case 2:
+            //        scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+            //        scheduleApproval.ApprovePoint = scheduleApproval.ApprovePoint == 0 ? 0 : scheduleApproval.ApprovePoint - 1;
+            //        break;
+            //    default:
+            //        scheduleApproval.ApprovalStatus = 0;
+            //        break;
+            //}
+
+            //_appDbContext.ScheduleApprovals.Add(scheduleApproval);
+            //await _appDbContext.SaveChangesAsync();
+
+            //return Ok();
         }
     }
 }

@@ -112,7 +112,8 @@ namespace AutoSched_Service.Controllers
         public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _appDbContext.Users.
-                Include(u => u.Schedules)
+                Include(u => u.ScheduleUser)
+                    .ThenInclude(sc => sc.Schedule)
                 .FirstOrDefaultAsync(r => r.RowId.ToString() == id);
 
             if (user is null)

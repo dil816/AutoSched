@@ -94,6 +94,7 @@ namespace AutoSched_Service.Services
             return new TokenResponseDto
             {
                 Email = user.Email,
+                Role = user.Role,
                 Accesstoken = CreateToken(user),
                 Refreshtoken = await GenerateAndSaveRefreshtokenAsync(user)
             };
