@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../hooks/useAuthContext";
+import Swal from "sweetalert2";
 
 const Presentation = () => {
   const { user } = useAuthContext();
@@ -27,6 +28,42 @@ const Presentation = () => {
   const handleAddSchedule = () => {
     navigate("/presentations/addeditpresentation");
   };
+
+    // DELETE function
+    const handleDelete = async (id) => {
+      const result = await Swal.fire({
+        title: "Are you sure?",
+        text: "Do you want to delete this presentation?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!",
+      });
+    
+      if (!result.isConfirmed) return;
+    
+      try {
+        const response = await fetch(`http://localhost:5008/api/Presentation/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${user.accesstoken}`,
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error("Failed to delete presentation");
+        }
+    
+        setpresentationData((prevData) => prevData.filter((p) => p.id !== id));
+    
+        Swal.fire("Deleted!", "Presentation has been deleted.", "success");
+      } catch (error) {
+        console.error("Error:", error);
+        Swal.fire("Error", "Error deleting presentation", "error");
+      }
+    };
+    
 
   return (
     <main className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
@@ -97,6 +134,18 @@ const Presentation = () => {
                 <td className="py-3 px-4 text-gray-600">{presentation.type}</td>
                 <td className="py-3 px-4 text-gray-600">{presentation.startTime}</td>
                 <td className="py-3 px-4 text-gray-600">{presentation.endTime}</td>
+                <td className="py-3 px-4 text-gray-600">
+                  <Link to={`/presentations/addeditpresentation/${presentation.id}`}>
+                  edit
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(presentation.id)}
+                    className="text-red-500 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </td>
+                
               </tr>
             ))}
           </tbody>
@@ -107,3 +156,5 @@ const Presentation = () => {
 };
 
 export default Presentation;
+
+

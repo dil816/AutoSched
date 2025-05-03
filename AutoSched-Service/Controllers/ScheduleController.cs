@@ -3,7 +3,6 @@ using AutoSched_Service.Dtos.Request;
 using AutoSched_Service.Dtos.Response;
 using AutoSched_Service.Models;
 using AutoSched_Service.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,38 +24,162 @@ namespace AutoSched_Service.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ScheduleResponseDto>>> GetSchedules()
         {
-            var schedule = await _appDbContext.Schedules
-                .Include(s => s.Users)
-                .Include(s => s.Presentation)
-                .AsNoTracking()
-                .Select(s => new ScheduleResponseDto
-                {
-                    StartTime = s.StartTime,
-                    EndTime = s.EndTime,
-                    Presentation = s.Presentation != null ? new ScheduledPresentation
-                    {
-                        PresentationName = s.Presentation.Title
-                    } : null,
-                    Examinars = s.Users
-                    .Where(s => s.Role == "2")
-                    .Select(s => new ScheduledUsers
-                    {
-                        Id = s.RowId.ToString(),
-                        UserName = s.Username
-                    })
-                    .ToList(),
-                    Students = s.Users
-                    .Where(s => s.Role == "3")
-                    .Select(s => new ScheduledUsers
-                    {
-                        Id = s.RowId.ToString(),
-                        UserName = s.Username
-                    })
-                    .ToList(),
-                })
-                .ToListAsync();
+            List<ScheduleResponseDto> response = [];
 
-            return Ok(schedule);
+            if (_authServices.GetUserRole().Equals("1"))
+            {
+                //for admin related schdule list
+                response = await _appDbContext.Schedules
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
+                    .Include(s => s.Presentation)
+                    .Select(s => new ScheduleResponseDto
+                    {
+                        Id = s.Id,
+                        Date = s.Date,
+                        StartTime = s.StartTime,
+                        EndTime = s.EndTime,
+                        Description = s.Description,
+                        Presentation = s.Presentation != null ? new ScheduledPresentation
+                        {
+                            Id = s.Presentation.Id,
+                            PresentationName = s.Presentation.Title,
+                            Type = s.Presentation.Type
+                        } : null,
+                        Examiners = s.ScheduleUser
+                        .Where(su => su.User.Role == "2")
+                        .Select(su => new ScheduledUsers
+                        {
+                            Id = su.User.RowId.ToString("D"),
+                            UserName = su.User.Username,
+                            Email = su.User.Email,
+                            ApprovalStatus = su.ApprovalStatus
+                        })
+                        .ToList(),
+                        Students = s.ScheduleUser
+                        .Where(su => su.User.Role == "3")
+                        .Select(su => new ScheduledUsers
+                        {
+                            Id = su.User.RowId.ToString("D"),
+                            UserName = su.User.Username,
+                            Email = su.User.Email
+                        })
+                        .ToList(),
+                    })
+                    .ToListAsync();
+            }
+            else
+            {
+                //for user related schdule list
+                var userScheduleIdList = await _appDbContext.ScheduleUsers
+                    .AsNoTracking()
+                    .Where(su => su.UserId == _authServices.GetUserId())
+                    .Select(su => su.ScheduleId)
+                    .ToListAsync();
+
+                if (userScheduleIdList is null)
+                {
+                    return NotFound();
+                }
+
+                response = await _appDbContext.Schedules
+                 .AsNoTracking()
+                 .AsSplitQuery()
+                 .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
+                 .Include(s => s.Presentation)
+                 .Where(u => userScheduleIdList.Contains(u.Id))
+                 .Select(s => new ScheduleResponseDto
+                 {
+                     Id = s.Id,
+                     Date = s.Date,
+                     StartTime = s.StartTime,
+                     EndTime = s.EndTime,
+                     Description = s.Description,
+                     Presentation = s.Presentation != null ? new ScheduledPresentation
+                     {
+                         Id = s.Presentation.Id,
+                         PresentationName = s.Presentation.Title,
+                         Type = s.Presentation.Type
+                     } : null,
+                     Examiners = s.ScheduleUser
+                    .Where(su => su.User.Role == "2")
+                    .Select(su => new ScheduledUsers
+                    {
+                        Id = su.User.RowId.ToString("D"),
+                        UserName = su.User.Username,
+                        Email = su.User.Email,
+                        ApprovalStatus = su.ApprovalStatus
+                    })
+                    .ToList(),
+                     Students = s.ScheduleUser
+                    .Where(su => su.User.Role == "3")
+                    .Select(su => new ScheduledUsers
+                    {
+                        Id = su.User.RowId.ToString("D"),
+                        UserName = su.User.Username,
+                        Email = su.User.Email
+                    })
+                    .ToList(),
+                 })
+                 .ToListAsync();
+            }
+
+            return Ok(response);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ScheduleResponseDto>> GetScheduleById(int id)
+        {
+            var schedule = await _appDbContext.Schedules
+                .AsNoTracking()
+                .Include(s => s.ScheduleUser)
+                    .ThenInclude(su => su.User)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+
+            ScheduleResponseDto response = new ScheduleResponseDto
+            {
+                Id = schedule.Id,
+                Date = schedule.Date,
+                StartTime = schedule.StartTime,
+                EndTime = schedule.EndTime,
+                Description = schedule.Description,
+                Presentation = schedule.Presentation != null ? new ScheduledPresentation
+                {
+                    Id = schedule.Presentation.Id,
+                    PresentationName = schedule.Presentation.Title,
+                    Type = schedule.Presentation.Type,
+                } : null,
+                Examiners = schedule.ScheduleUser
+                .Where(su => su.User.Role == "2")
+                .Select(su => new ScheduledUsers
+                {
+                    Id = su.User.RowId.ToString("D"),
+                    UserName = su.User.Username,
+                    Email = su.User.Email,
+                    ApprovalStatus = su.ApprovalStatus
+                })
+                .ToList(),
+                Students = schedule.ScheduleUser
+                .Where(su => su.User.Role == "3")
+                .Select(su => new ScheduledUsers
+                {
+                    Id = su.User.RowId.ToString("D"),
+                    UserName = su.User.Username,
+                    Email = su.User.Email
+                })
+                .ToList(),
+            };
+
+            return Ok(response);
         }
 
         [HttpPost]
@@ -69,12 +192,41 @@ namespace AutoSched_Service.Controllers
 
             var presentation = await _appDbContext.Presentations
                 .FindAsync(request.PresentationId);
+
             if (presentation is null)
             {
                 return BadRequest();
             }
 
-            var users = await _appDbContext.Users
+            Schedule schedule = new Schedule
+            {
+                Date = request.Date,
+                StartTime = request.StartTime,
+                EndTime = request.EndTime,
+                Description = request.Description,
+                PresentationId = request.PresentationId,
+                Presentation = presentation,
+            };
+            _appDbContext.Schedules.Add(schedule);
+            await _appDbContext.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("AssignScheduleToUser")]
+        public async Task<IActionResult> AssignScheduleToUser(AssignScheduleToUserRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+
+            var users = await _appDbContext.Users           //check requset usrs in db
                 .Where(u => request.UserId.Contains(u.RowId.ToString()))
                 .ToListAsync();
 
@@ -83,28 +235,434 @@ namespace AutoSched_Service.Controllers
                 return BadRequest("some users not in db");
             }
 
+            var existingScheduleUsersId = schedule.ScheduleUser   //get existing users list in this requested schedule
+                .Select(su => su.User.RowId.ToString())
+                .ToList();
 
-            Schedule schedule = new Schedule
+            var newUsersId = request.UserId    // Actual users to add
+                .Except(existingScheduleUsersId)
+                .ToList();
+
+            if (newUsersId.Count == 0)
             {
-                StartTime = request.StartTime,
-                EndTime = request.EndTime,
-                PresentationId = request.PresentationId,
-                Users = users
-            };
-            _appDbContext.Schedules.Add(schedule);
+                return NoContent();
+            }
+
+            var newUsersToAdd = users
+                .Where(u => newUsersId.Contains(u.RowId.ToString()))
+                .ToList();
+
+            foreach (var item in newUsersToAdd)
+            {
+                //schedule.Users.Add(item);
+                schedule.ScheduleUser.Add(new ScheduleUser
+                {
+                    UserId = item.Id,
+                    ScheduleId = schedule.Id,
+                    ApprovalStatus = 0, // pending by default
+                    ApprovePoint = 0
+                });
+            }
+
             await _appDbContext.SaveChangesAsync();
-            return Ok();
+
+            return NoContent();
         }
 
-        //[HttpPut]
-        //public Task<IActionResult> UpdateSchedule(int id, Schedule schedule)
-        //{
+        [HttpPost("UnAssignScheduleToUser")]
+        public async Task<IActionResult> UnAssignScheduleToUser(UnAssignScheduleToUserRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
 
-        //}
+            if (schedule is null)
+            {
+                return NotFound();
+            }
 
-        //[HttpDelete]
-        //public Task DeleteSchedule(Schedule schedule)
-        //{
-        //}
+            var users = await _appDbContext.Users           //check requset usrs to unassign in db
+                .Where(u => request.UserId.Contains(u.RowId.ToString()))
+                .ToListAsync();
+
+            if (users.Count != request.UserId.Count)
+            {
+                return BadRequest("some users not in db");
+            }
+
+            foreach (var item in users)
+            {
+                //schedule.Users.Remove(item);
+                schedule.ScheduleUser.RemoveAll(sc => sc.UserId == item.Id);
+            }
+
+            await _appDbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPost("GetUserListToAssignSchedule")]
+        public async Task<ActionResult<GetUserListToAssignScheduleResponseDto>> GetUserListToAssignSchedule(GetUserListToAssignScheduleRequestDto request)
+        {
+            GetUserListToAssignScheduleResponseDto response = new();
+
+            //var currentAssignedUsers = await _appDbContext.Schedules
+            //    .AsNoTracking()
+            //    .Include(s => s.Users)
+            //    .Where(s => s.Id == request.ScheduleId)
+            //    .SelectMany(s => s.Users)
+            //    .Select(u => u.Id)
+            //    .ToListAsync();
+
+            var currentAssignedUsers = await _appDbContext.ScheduleUsers
+                .AsNoTracking()
+                .Where(su => su.ScheduleId == request.ScheduleId)
+                .Select(su => su.UserId)
+                .ToListAsync();
+
+            if (currentAssignedUsers is null)
+            {
+                return NotFound();
+            }
+
+            var notAssignedUsersList = await _appDbContext.Users
+                .AsNoTracking()
+                .Where(u => !currentAssignedUsers.Contains(u.Id) && u.Role != "1")
+                .Select(u => new UserDto
+                {
+                    Id = u.RowId.ToString("D"),
+                    Email = u.Email,
+                    Username = u.Username,
+                    Role = u.Role,
+                })
+                .ToListAsync();
+
+            foreach (var user in notAssignedUsersList)
+            {
+                if (user.Role == "2")
+                {
+                    response.ExaminerList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+                else if (user.Role == "3")
+                {
+                    response.StudentList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("GetUserListToUnAssignSchedule")]
+        public async Task<ActionResult<GetUserListToUnAssignScheduleResponseDto>> GetUserListToAssignSchedule(GetUserListToUnAssignScheduleRequestDto request)
+        {
+            GetUserListToUnAssignScheduleResponseDto response = new();
+
+            var AssignedUsers = await _appDbContext.ScheduleUsers
+                .AsNoTracking()
+                .Include(sc => sc.User)
+                .Where(sc => sc.ScheduleId == request.ScheduleId)
+                .Select(sc => new UserDto
+                {
+                    Id = sc.User.RowId.ToString("D"),
+                    Email = sc.User.Email,
+                    Username = sc.User.Username,
+                    Role = sc.User.Role,
+                })
+                .ToListAsync();
+
+            if (AssignedUsers is null)
+            {
+                return NotFound();
+            }
+
+            foreach (var user in AssignedUsers)
+            {
+                if (user.Role == "2")
+                {
+                    response.ExaminerList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+                else if (user.Role == "3")
+                {
+                    response.StudentList.Add(new UserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username
+                    });
+                }
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateSchedule(int id, ScheduleRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.ScheduleUser)
+                        .Include(su => su.ScheduleUser)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+
+            var presentation = await _appDbContext.Presentations
+                .FindAsync(request.PresentationId);
+
+            if (presentation is null)
+            {
+                return BadRequest();
+            }
+
+            schedule.Date = request.Date;
+            schedule.StartTime = request.StartTime;
+            schedule.EndTime = request.EndTime;
+            schedule.Description = request.Description;
+            schedule.PresentationId = request.PresentationId;
+            schedule.Presentation = presentation;
+
+            await _appDbContext.SaveChangesAsync();
+
+            return NoContent();
+
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSchedule(int id)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.ScheduleUser)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+            _appDbContext.Schedules.Remove(schedule);
+            await _appDbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpPost("ChangeScheduleApprovalStatus")]
+        public async Task<IActionResult> ChangeScheduleApprovalStatus(ChangeScheduleApprovalStatusRequestDto request)
+        {
+            var existingscheduleApproval = await _appDbContext.ScheduleUsers
+                .Include(sc => sc.User)
+                .FirstOrDefaultAsync(sc => sc.ScheduleId == request.ScheduleId && sc.User.RowId == Guid.Parse(request.ExaminarId));
+
+            //var examinar = await _appDbContext.Users
+            //    .Where(u => u.Role == "2")
+            //    .FirstOrDefaultAsync(u => u.RowId == Guid.Parse(request.ExaminarId));
+
+            //var res = await _appDbContext.ScheduleUsers
+            //    .Include(sc => sc.User)
+            //    .Where(sc => sc.ScheduleId == request.ScheduleId && sc.User.RowId == Guid.Parse(request.ExaminarId))
+            //    .Select(sc => sc.ApprovalStatus)
+            //    .ToListAsync();
+
+            //if (schedule is null || examinar is null)
+            //{
+            //    return NotFound();
+            //}
+
+            if (existingscheduleApproval is null)
+            {
+                return NotFound();
+            }
+
+            //var existingscheduleApproval = await _appDbContext.ScheduleApprovals
+            //    .FirstOrDefaultAsync(s => s.ScheduleId == request.ScheduleId && s.ExaminarId == request.ExaminarId);
+
+            
+            switch (request.ApprovalStatus)
+            {
+                case 0:
+                    existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    existingscheduleApproval.ApprovePoint = 0;
+                    break;
+                case 1:
+                    existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    existingscheduleApproval.ApprovePoint++;
+                    break;
+                case 2:
+                    existingscheduleApproval.ApprovalStatus = request.ApprovalStatus;
+                    existingscheduleApproval.ApprovePoint = existingscheduleApproval.ApprovePoint == 0 ? 0 : existingscheduleApproval.ApprovePoint - 1;
+                    break;
+                default:
+                    existingscheduleApproval.ApprovalStatus = 0;
+                    break;
+            }
+
+            await _appDbContext.SaveChangesAsync();
+
+            return Ok();
+         
+            //ScheduleApproval scheduleApproval = new();
+
+            //scheduleApproval.ExaminarId = request.ExaminarId;
+            //scheduleApproval.ScheduleId = request.ScheduleId;
+            //// 0 - pending, 1 - approve, 2 - rejected
+            //switch (request.ApprovalStatus)
+            //{
+            //    case 0:
+            //        scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+            //        scheduleApproval.ApprovePoint = 0;
+            //        break;
+            //    case 1:
+            //        scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+            //        scheduleApproval.ApprovePoint++;
+            //        break;
+            //    case 2:
+            //        scheduleApproval.ApprovalStatus = request.ApprovalStatus;
+            //        scheduleApproval.ApprovePoint = scheduleApproval.ApprovePoint == 0 ? 0 : scheduleApproval.ApprovePoint - 1;
+            //        break;
+            //    default:
+            //        scheduleApproval.ApprovalStatus = 0;
+            //        break;
+            //}
+
+            //_appDbContext.ScheduleApprovals.Add(scheduleApproval);
+            //await _appDbContext.SaveChangesAsync();
+
+            //return Ok();
+        }
+
+        [HttpPost("GetUserListToSwapAssignSchedule")]
+        public async Task<ActionResult<GetUserListToSwapAssignScheduleResponseDto>> GetUserListToSwapAssignSchedule(GetUserListToAssignScheduleRequestDto request)
+        {
+            GetUserListToSwapAssignScheduleResponseDto response = new();
+
+            //var currentAssignedUsers = await _appDbContext.Schedules
+            //    .AsNoTracking()
+            //    .Include(s => s.Users)
+            //    .Where(s => s.Id == request.ScheduleId)
+            //    .SelectMany(s => s.Users)
+            //    .Select(u => u.Id)
+            //    .ToListAsync();
+
+            var currentAssignedUsers = await _appDbContext.ScheduleUsers
+                .AsNoTracking()
+                .Where(su => su.ScheduleId == request.ScheduleId)
+                .Select(su => su.UserId)
+                .ToListAsync();
+
+            if (currentAssignedUsers is null)
+            {
+                return NotFound();
+            }
+
+            var notAssignedUsersList = await _appDbContext.Users
+                .Include(u => u.ScheduleUser)
+                .AsNoTracking()
+                .Where(u => !currentAssignedUsers.Contains(u.Id) && u.Role != "1")
+                .Select(u => new SwapUserDto
+                {
+                    Id = u.RowId.ToString("D"),
+                    Email = u.Email,
+                    Username = u.Username,
+                    Role = u.Role,
+                    ApprovalPoint = u.ScheduleUser.Sum(sc => sc.ApprovePoint),
+                    
+                })
+                .ToListAsync();
+
+            foreach (var user in notAssignedUsersList)
+            {
+                if (user.Role == "2")
+                {
+                    response.ExaminerList.Add(new SwapUserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username,
+                        ApprovalPointCount = user.ApprovalPoint 
+                    });
+                }
+                else if (user.Role == "3")
+                {
+                    response.StudentList.Add(new SwapUserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username,
+                        ApprovalPointCount = user.ApprovalPoint
+                    });
+                }
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("SwapScheduleToUser")]
+        public async Task<IActionResult> SwapScheduleToUser(SwapExaminarToScheduleRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+
+            var user = await _appDbContext.Users           //check requset usrs to unassign in db
+                .FirstOrDefaultAsync(u => request.RejectUserId == u.RowId.ToString());
+                //.ToListAsync();
+
+            if (user is null)
+            {
+                return BadRequest("some users not in db");
+            }
+
+            //foreach (var item in users)
+            //{
+                //schedule.Users.Remove(item);
+            schedule.ScheduleUser.RemoveAll(sc => sc.UserId == user.Id);
+
+            //}
+
+            var swapuser = await _appDbContext.Users           //check requset usrs in db
+                .FirstOrDefaultAsync(u => request.SwapUserId == u.RowId.ToString());
+
+            if (swapuser is null)
+            {
+                return BadRequest("some users not in db");
+            }
+
+            schedule.ScheduleUser.Add(new ScheduleUser
+            {
+                UserId = swapuser.Id,
+                ScheduleId = schedule.Id,
+                ApprovalStatus = 0, // pending by default
+                ApprovePoint = 0
+            });
+
+
+            await _appDbContext.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }

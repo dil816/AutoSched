@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AutoSched_Service.Migrations
 {
     /// <inheritdoc />
-    public partial class osura : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,9 +17,11 @@ namespace AutoSched_Service.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    StartTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    EndTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    IsAvailable = table.Column<bool>(type: "bit", nullable: false)
+                    Date = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StartTime = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EndTime = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsAvailable = table.Column<bool>(type: "bit", nullable: false),
+                    ExaminarName = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -41,6 +43,22 @@ namespace AutoSched_Service.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Presentations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ScheduleApprovals",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ExaminarId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ScheduleId = table.Column<int>(type: "int", nullable: false),
+                    ApprovalStatus = table.Column<int>(type: "int", nullable: false),
+                    ApprovePoint = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ScheduleApprovals", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -70,7 +88,7 @@ namespace AutoSched_Service.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    NewDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    NewDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PresentationId = table.Column<int>(type: "int", nullable: true)
@@ -91,8 +109,10 @@ namespace AutoSched_Service.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PresentationId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -107,24 +127,26 @@ namespace AutoSched_Service.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ScheduleUser",
+                name: "ScheduleUsers",
                 columns: table => new
                 {
-                    SchedulesId = table.Column<int>(type: "int", nullable: false),
-                    UsersId = table.Column<int>(type: "int", nullable: false)
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    ScheduleId = table.Column<int>(type: "int", nullable: false),
+                    ApprovalStatus = table.Column<int>(type: "int", nullable: false),
+                    ApprovePoint = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ScheduleUser", x => new { x.SchedulesId, x.UsersId });
+                    table.PrimaryKey("PK_ScheduleUsers", x => new { x.UserId, x.ScheduleId });
                     table.ForeignKey(
-                        name: "FK_ScheduleUser_Schedules_SchedulesId",
-                        column: x => x.SchedulesId,
+                        name: "FK_ScheduleUsers_Schedules_ScheduleId",
+                        column: x => x.ScheduleId,
                         principalTable: "Schedules",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ScheduleUser_Users_UsersId",
-                        column: x => x.UsersId,
+                        name: "FK_ScheduleUsers_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -143,9 +165,9 @@ namespace AutoSched_Service.Migrations
                 column: "PresentationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ScheduleUser_UsersId",
-                table: "ScheduleUser",
-                column: "UsersId");
+                name: "IX_ScheduleUsers_ScheduleId",
+                table: "ScheduleUsers",
+                column: "ScheduleId");
         }
 
         /// <inheritdoc />
@@ -158,7 +180,10 @@ namespace AutoSched_Service.Migrations
                 name: "Reschedules");
 
             migrationBuilder.DropTable(
-                name: "ScheduleUser");
+                name: "ScheduleApprovals");
+
+            migrationBuilder.DropTable(
+                name: "ScheduleUsers");
 
             migrationBuilder.DropTable(
                 name: "Schedules");

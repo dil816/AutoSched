@@ -9,7 +9,7 @@ namespace AutoSched_Service.Services
         Task<User?> RegisterAsync(UserRegRequestDto request);
         Task<TokenResponseDto?> LoginAsync(UserLoginRequestDto request);
         Task<TokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request);
-        string? CurrentUserRole();
-        string? CurrentUserId();
+        string GetUserRole();
+        int? GetUserId();
     }
 }

@@ -9,9 +9,12 @@
         //public User? User { get; set; }
 
         public int Id { get; set; }
-        public DateTime StartTime {  get; set; }
-        public DateTime EndTime { get; set; }
-        public List<User> Users { get; set; } = []; // M:M
+        public DateTime Date { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
+        public string Description { get; set; } = string.Empty;
+        //public List<User> Users { get; set; } = []; // M:M
+        public List<ScheduleUser> ScheduleUser { get; set; } = []; // M:M
         public int PresentationId { get; set; }  // 1:M child
         public Presentation Presentation { get; set; } = null!;// 1:M child
 

@@ -4,23 +4,26 @@ import {
   Category, // Dashboard
   UserAdd, // Add Professor
   Star1, // Icons
-  CalendarAdd, // Add Schedule
+  CalendarAdd, // Add ReSchedule
   Building, // Add Room
   Book, // Add Course
   DocumentText, // Course
   Teacher, // Professor
   Home, // Room
-  Clock, // Schedule
+  Clock, // ReSchedule
   Key, // Login
   Setting2, // Settings
   Profile, // Profile
   Document, // Reports
-  Chart, // Analytics
+  Chart,
+  Calendar, // Analytics
 } from "iconsax-react";
 import { Link } from "react-router-dom";
+import useAuthContext from "../../hooks/useAuthContext.jsx";
 
 function Sidebar() {
-  const menuItems = [
+  const { user } = useAuthContext();
+  const adminmenuItems = [
     {
       path: "/",
       name: "Dashboard",
@@ -43,16 +46,62 @@ function Sidebar() {
     },
 
     {
-      path: "/schedules",
-      name: "Schedule",
+      path: "/reschedules",
+      name: "Reschedule",
       icon: <Clock size="20" color="#697689" />,
     },
     {
-      path: "/reports",
-      name: "Reports",
-      icon: <Document size="20" color="#697689" />,
+      path: "/schedules",
+      name: "schedule",
+      icon: <Calendar size="20" color="#697689" />,
     },
   ];
+
+  const exammenuItems = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <Category size="20" color="#697689" />,
+    },
+    {
+      path: "/reschedules",
+      name: "Reschedule",
+      icon: <Clock size="20" color="#697689" />,
+    },
+    {
+      path: "/schedules",
+      name: "schedule",
+      icon: <Calendar size="20" color="#697689" />,
+    },
+  ];
+
+  const stdmenuItems = [
+    {
+      path: "/",
+      name: "Dashboard",
+      icon: <Category size="20" color="#697689" />,
+    },
+    {
+      path: "/reschedules",
+      name: "Reschedule",
+      icon: <Clock size="20" color="#697689" />,
+    },
+    {
+      path: "/schedules",
+      name: "schedule",
+      icon: <Calendar size="20" color="#697689" />,
+    },
+  ];
+
+  const userRole = () => {
+    if (user.role === "1"){
+      return adminmenuItems
+    }else if(user.role === "2"){
+      return exammenuItems
+    }else {
+      return stdmenuItems
+    }
+  }
 
   return (
     <nav className="w-60 bg-white text-gray-50 p-4 flex-shrink-0 overflow-y-auto max-h-[calc(100vh-4rem)]">
@@ -63,7 +112,7 @@ function Sidebar() {
 
       {/* Menu Items */}
       <ul className="space-y-2">
-        {menuItems.map((item, index) => (
+        {userRole().map((item, index) => (
           <li key={index}>
             <Link
               to={item.path}

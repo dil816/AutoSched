@@ -95,8 +95,9 @@ namespace AutoSched_Service.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("NewDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("NewDate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PresentationId")
                         .HasColumnType("int");
@@ -126,20 +127,74 @@ namespace AutoSched_Service.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("EndTime")
+                    b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
 
                     b.Property<int>("PresentationId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PresentationId");
 
                     b.ToTable("Schedules");
+                });
+
+            modelBuilder.Entity("AutoSched_Service.Models.ScheduleApproval", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApprovalStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ApprovePoint")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ExaminarId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ScheduleApprovals");
+                });
+
+            modelBuilder.Entity("AutoSched_Service.Models.ScheduleUser", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ApprovalStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ApprovePoint")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "ScheduleId");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.ToTable("ScheduleUsers");
                 });
 
             modelBuilder.Entity("AutoSched_Service.Models.User", b =>
@@ -188,21 +243,6 @@ namespace AutoSched_Service.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ScheduleUser", b =>
-                {
-                    b.Property<int>("SchedulesId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("int");
-
-                    b.HasKey("SchedulesId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("ScheduleUser");
-                });
-
             modelBuilder.Entity("AutoSched_Service.Models.Reschedule", b =>
                 {
                     b.HasOne("AutoSched_Service.Models.Presentation", "Presentation")
@@ -223,19 +263,23 @@ namespace AutoSched_Service.Migrations
                     b.Navigation("Presentation");
                 });
 
-            modelBuilder.Entity("ScheduleUser", b =>
+            modelBuilder.Entity("AutoSched_Service.Models.ScheduleUser", b =>
                 {
-                    b.HasOne("AutoSched_Service.Models.Schedule", null)
-                        .WithMany()
-                        .HasForeignKey("SchedulesId")
+                    b.HasOne("AutoSched_Service.Models.Schedule", "Schedule")
+                        .WithMany("ScheduleUser")
+                        .HasForeignKey("ScheduleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AutoSched_Service.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
+                    b.HasOne("AutoSched_Service.Models.User", "User")
+                        .WithMany("ScheduleUser")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Schedule");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("AutoSched_Service.Models.Presentation", b =>
@@ -243,6 +287,16 @@ namespace AutoSched_Service.Migrations
                     b.Navigation("Reschedule");
 
                     b.Navigation("Schedules");
+                });
+
+            modelBuilder.Entity("AutoSched_Service.Models.Schedule", b =>
+                {
+                    b.Navigation("ScheduleUser");
+                });
+
+            modelBuilder.Entity("AutoSched_Service.Models.User", b =>
+                {
+                    b.Navigation("ScheduleUser");
                 });
 #pragma warning restore 612, 618
         }
