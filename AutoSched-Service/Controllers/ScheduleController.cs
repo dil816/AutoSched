@@ -547,5 +547,122 @@ namespace AutoSched_Service.Controllers
 
             //return Ok();
         }
+
+        [HttpPost("GetUserListToSwapAssignSchedule")]
+        public async Task<ActionResult<GetUserListToSwapAssignScheduleResponseDto>> GetUserListToSwapAssignSchedule(GetUserListToAssignScheduleRequestDto request)
+        {
+            GetUserListToSwapAssignScheduleResponseDto response = new();
+
+            //var currentAssignedUsers = await _appDbContext.Schedules
+            //    .AsNoTracking()
+            //    .Include(s => s.Users)
+            //    .Where(s => s.Id == request.ScheduleId)
+            //    .SelectMany(s => s.Users)
+            //    .Select(u => u.Id)
+            //    .ToListAsync();
+
+            var currentAssignedUsers = await _appDbContext.ScheduleUsers
+                .AsNoTracking()
+                .Where(su => su.ScheduleId == request.ScheduleId)
+                .Select(su => su.UserId)
+                .ToListAsync();
+
+            if (currentAssignedUsers is null)
+            {
+                return NotFound();
+            }
+
+            var notAssignedUsersList = await _appDbContext.Users
+                .Include(u => u.ScheduleUser)
+                .AsNoTracking()
+                .Where(u => !currentAssignedUsers.Contains(u.Id) && u.Role != "1")
+                .Select(u => new SwapUserDto
+                {
+                    Id = u.RowId.ToString("D"),
+                    Email = u.Email,
+                    Username = u.Username,
+                    Role = u.Role,
+                    ApprovalPoint = u.ScheduleUser.Sum(sc => sc.ApprovePoint),
+                    
+                })
+                .ToListAsync();
+
+            foreach (var user in notAssignedUsersList)
+            {
+                if (user.Role == "2")
+                {
+                    response.ExaminerList.Add(new SwapUserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username,
+                        ApprovalPointCount = user.ApprovalPoint 
+                    });
+                }
+                else if (user.Role == "3")
+                {
+                    response.StudentList.Add(new SwapUserDetails
+                    {
+                        UserId = user.Id,
+                        UserEmail = user.Email,
+                        UserName = user.Username,
+                        ApprovalPointCount = user.ApprovalPoint
+                    });
+                }
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("SwapScheduleToUser")]
+        public async Task<IActionResult> SwapScheduleToUser(SwapExaminarToScheduleRequestDto request)
+        {
+            var schedule = await _appDbContext.Schedules
+                .Include(s => s.ScheduleUser)
+                        .ThenInclude(su => su.User)
+                .Include(s => s.Presentation)
+                .FirstOrDefaultAsync(s => s.Id == request.ScheduleId);
+
+            if (schedule is null)
+            {
+                return NotFound();
+            }
+
+            var user = await _appDbContext.Users           //check requset usrs to unassign in db
+                .FirstOrDefaultAsync(u => request.RejectUserId == u.RowId.ToString());
+                //.ToListAsync();
+
+            if (user is null)
+            {
+                return BadRequest("some users not in db");
+            }
+
+            //foreach (var item in users)
+            //{
+                //schedule.Users.Remove(item);
+            schedule.ScheduleUser.RemoveAll(sc => sc.UserId == user.Id);
+
+            //}
+
+            var swapuser = await _appDbContext.Users           //check requset usrs in db
+                .FirstOrDefaultAsync(u => request.SwapUserId == u.RowId.ToString());
+
+            if (swapuser is null)
+            {
+                return BadRequest("some users not in db");
+            }
+
+            schedule.ScheduleUser.Add(new ScheduleUser
+            {
+                UserId = swapuser.Id,
+                ScheduleId = schedule.Id,
+                ApprovalStatus = 0, // pending by default
+                ApprovePoint = 0
+            });
+
+
+            await _appDbContext.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }
