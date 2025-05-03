@@ -183,7 +183,7 @@ function User() {
                   <td className="py-3 px-4 text-gray-600">
                     <button
                       className="ml-2"
-                      onClick={() => handledelete(user.rowId)}
+                      onClick={() => handleDelete(user.rowId)}
                     >
                       Delete
                     </button>
