@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../hooks/useAuthContext";
+import Swal from "sweetalert2";
 
 const ReSchedule = () => {
   const { user } = useAuthContext();
@@ -29,17 +30,39 @@ const ReSchedule = () => {
   };
 
   const handledelete = async (id) => {
-    const response = await fetch(`http://localhost:5008/api/Reschedule/${id}`, {
-      method: "DELETE",
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this reschedule?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
     });
-
-    if (response.ok) {
+  
+    if (!result.isConfirmed) return;
+  
+    try {
+      const response = await fetch(`http://localhost:5008/api/Reschedule/${id}`, {
+        method: "DELETE",
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete reschedule");
+      }
+  
       const updatedavailabilities = reschduleData.filter(
         (item) => item.id !== id
       );
       setReSchduleData(updatedavailabilities);
+  
+      Swal.fire("Deleted!", "Reschedule has been deleted.", "success");
+    } catch (error) {
+      console.error("Error:", error);
+      Swal.fire("Error", "Error deleting reschedule", "error");
     }
   };
+  
   return (
     <main className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
       {/* Header Section */}

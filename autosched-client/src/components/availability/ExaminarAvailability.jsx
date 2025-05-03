@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../hooks/useAuthContext";
+import Swal from "sweetalert2";
 
 const ExaminarAvailability = () => {
   const { user } = useAuthContext();
@@ -29,20 +30,43 @@ const ExaminarAvailability = () => {
   };
 
   const handledelete = async (id) => {
-    const response = await fetch(
-      `http://localhost:5008/api/Availability/${id}`,
-      {
-        method: "DELETE",
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this availability?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+  
+    if (!result.isConfirmed) return;
+  
+    try {
+      const response = await fetch(
+        `http://localhost:5008/api/Availability/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete availability");
       }
-    );
-
-    if (response.ok) {
+  
+      // Update the state after successful deletion
       const updatedavailabilities = availabilitydata.filter(
         (item) => item.id !== id
       );
       setAvailabilityData(updatedavailabilities);
+  
+      Swal.fire("Deleted!", "Availability has been deleted.", "success");
+    } catch (error) {
+      console.error("Error:", error);
+      Swal.fire("Error", "Error deleting availability", "error");
     }
   };
+  
 
   return (
     <main className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">

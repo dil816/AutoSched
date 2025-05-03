@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../hooks/useAuthContext.jsx";
+import Swal from "sweetalert2";
+
 import {
   CloseCircle,
   Edit2,
@@ -44,15 +46,37 @@ const ReSchedule = () => {
   };
 
   const handleDelete = async (id) => {
-    const response = await fetch(`http://localhost:5008/api/Schedule/${id}`, {
-      method: "DELETE",
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this schedule?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
     });
-
-    if (response.ok) {
+  
+    if (!result.isConfirmed) return;
+  
+    try {
+      const response = await fetch(`http://localhost:5008/api/Schedule/${id}`, {
+        method: "DELETE",
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete schedule");
+      }
+  
       const updatedSchedules = scheduleData.filter((item) => item.id !== id);
       setScheduleData(updatedSchedules);
+  
+      Swal.fire("Deleted!", "Schedule has been deleted.", "success");
+    } catch (error) {
+      console.error("Error:", error);
+      Swal.fire("Error", "Error deleting schedule", "error");
     }
   };
+  
 
   const test = (ser) => {
     console.log(ser.find(e => e.email === user.email));
