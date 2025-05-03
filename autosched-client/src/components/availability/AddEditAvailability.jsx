@@ -96,11 +96,11 @@ function AddEditAvailability() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
+    e.preventDefault();if (!validateForm()) {
       return;
     }
+
+
 
     try {
       const url = id

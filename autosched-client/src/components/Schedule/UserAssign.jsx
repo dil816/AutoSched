@@ -72,6 +72,33 @@ function UserAssign({ isOpen, onClose, schedule }) {
     });
   };
 
+  const handleUserAssign = async () => {
+    //console.log([...selectedUsers])
+    const request = {
+      scheduleId: schedule.id,
+      userId: [...selectedUsers],
+    };
+
+    if (selectedUsers.size > 0 && schedule.id != null) {
+      const response = await fetch(
+        `http://localhost:5008/api/Schedule/AssignScheduleToUser`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(request),
+        },
+      );
+
+      if (response.ok) {
+        onClose();
+      }
+    } else {
+      console.error("error in id");
+    }
+  };
+
   if (!isOpen) {
     return null;
   } else {
@@ -99,7 +126,8 @@ function UserAssign({ isOpen, onClose, schedule }) {
                 {`All ${selectedFilter} ${users.length}`}
               </span>
               <button
-                onClick={() => console.log([...selectedUsers])}
+                disabled={selectedUsers.size === 0}
+                onClick={() => handleUserAssign()}
                 className="bg-black text-white px-3 py-1 rounded-md"
               >
                 + Add {selectedUsers.size}

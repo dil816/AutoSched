@@ -1,12 +1,13 @@
 import { Setting2 } from "iconsax-react";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import useAuthContext from "../../hooks/useAuthContext.jsx";
 
 function AddEditSchedule() {
   const { user } = useAuthContext();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [presentationList, setPresentationList] = useState([]);
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
@@ -14,7 +15,6 @@ function AddEditSchedule() {
     endTime: "",
     presentationId: null,
     description: "",
-    UserId: [],
     examiners: [],
     students: [],
   });
@@ -49,8 +49,6 @@ function AddEditSchedule() {
       examiners: data.examiners,
       students: data.students,
     });
-    setExaminers(new Set(data.examiners));
-    setStudents(new Set(data.students));
   };
 
   const getPresentationList = async () => {
@@ -65,14 +63,93 @@ function AddEditSchedule() {
     setFormError((prevError) => ({ ...prevError, [id]: "" }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     console.log(formData);
-    //
+
+    try {
+      const url = id
+        ? `http://localhost:5008/api/Schedule/${id}`
+        : "http://localhost:5008/api/Schedule";
+      const method = id ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setFormData({
+          date: "",
+          startTime: "",
+          endTime: "",
+          presentationId: null,
+          description: "",
+          examiners: [],
+          students: [],
+        });
+        setFormError({});
+        navigate("/schedules");
+      } else {
+        console.error("Failed to save schedule");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   };
 
   const validateForm = () => {
-    console.log("");
+    const errors = {};
+    const today = new Date().toISOString().split("T")[0];
+
+    //date validation
+    if (!formData.date) {
+      errors.date = "Date is required";
+    } else if (formData.date < today) {
+      errors.date = "Date cannot be in the past";
+    }
+
+    //start time validation
+    if (!formData.startTime) {
+      errors.startTime = "Start time is required";
+    }
+
+    //end time validation
+    if (!formData.endTime) {
+      errors.endTime = "End time is required";
+    }
+
+    // Time range validation
+    if (formData.startTime && formData.endTime) {
+      if (formData.startTime >= formData.endTime) {
+        errors.endTime = "End time must be after start time";
+      }
+    }
+
+    //presentation validation
+    if (!formData.presentationId) {
+      errors.presentationId = "Please select a presentation";
+    }
+
+    //description validation
+    if (!formData.description.trim()) {
+      errors.description = "Description is required";
+    } else if (formData.description.length < 5) {
+      errors.description = "Description must be at least 5 characters";
+    } else if (formData.description.length > 500) {
+      errors.description = "Description cannot exceed 500 characters";
+    }
+
+    setFormError(errors);
+    return Object.keys(errors).length === 0;
   };
 
   return (
