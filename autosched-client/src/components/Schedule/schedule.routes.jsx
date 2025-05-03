@@ -1,11 +1,9 @@
-import React from "react";
 import { Route, Routes } from "react-router-dom";
-import Schedule from "./Schedule";
-import AddSchedule from "./AddEditSchedule";
-import ScheduleForm from "./ScheduleForm";
-import AddEditSchedule from "./AddEditSchedule";
+import React from "react";
+import Schedule from "./Schedule.jsx";
+import AddEditSchedule from "./AddEditSchedule.jsx";
 
-const ScheduleRoutes = () => {
+const scheduleRoutes = () => {
   return (
     <>
       <Routes>
@@ -17,4 +15,4 @@ const ScheduleRoutes = () => {
   );
 };
 
-export default ScheduleRoutes;
+export default scheduleRoutes;
