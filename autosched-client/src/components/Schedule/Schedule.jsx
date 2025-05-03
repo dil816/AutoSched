@@ -184,7 +184,7 @@ const ReSchedule = () => {
               <th className="py-3 px-4">StartTime</th>
               <th className="py-3 px-4">End Time</th>
               <th className="py-3 px-4">Description</th>
-              <th className="py-3 px-4">Work</th>
+              <th className="py-3 px-4">Action</th>
             </tr>
           </thead>
           <tbody>

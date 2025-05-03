@@ -102,9 +102,9 @@ function Dashboard() {
         </div>
       </div>
       {/* Chart Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Chart 1 */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="w-full bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             Schedule Distribution
           </h3>
@@ -124,34 +124,6 @@ function Dashboard() {
                   dot={{ strokeWidth: 4, fill: "#8884d8" }}
                   dataKey="count"
                   stroke="#8884d8"
-                  name="schedule count"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Chart 2 */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Schedule Distribution
-          </h3>
-          <div className="w-full h-[300px] sm:h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={scheduleData}
-                margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
-              >
-                <CartesianGrid stroke="#e3e3e3" />
-                <XAxis dataKey="date" axisLine={false} />
-                <YAxis axisLine={false} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  strokeWidth={3}
-                  dot={{ strokeWidth: 4, fill: "#f54ebb" }}
-                  dataKey="count"
-                  stroke="#f54ebb"
                   name="schedule count"
                 />
               </LineChart>
