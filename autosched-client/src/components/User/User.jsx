@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../hooks/useAuthContext";
+import Swal from "sweetalert2";
 
 function User() {
   const navigate = useNavigate();
@@ -41,25 +42,40 @@ function User() {
 
   // Handle user deletion
   const handleDelete = async (id) => {
-    if (!id) return; // Guard clause for invalid ID
-
-    try {
-      const response = await fetch(`http://localhost:5008/api/User/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${user.accesstoken}` },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete user");
+    if (!id) return;
+  
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won’t be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+  
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`http://localhost:5008/api/User/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${user.accesstoken}`,
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error("Failed to delete user");
+        }
+  
+        setUserData((prevData) => prevData.filter((item) => item.rowId !== id));
+  
+        Swal.fire("Deleted!", "User has been deleted.", "success");
+      } catch (err) {
+        setError(err.message);
+        Swal.fire("Error!", err.message, "error");
       }
-
-      // Update state by filtering out the deleted user
-      setUserData((prevData) => prevData.filter((item) => item.rowId !== id));
-    } catch (err) {
-      setError(err.message);
     }
   };
-
   // Navigate to add user page
   const handleAddUser = () => {
     navigate("/users/adduser");

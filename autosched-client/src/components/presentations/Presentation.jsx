@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../hooks/useAuthContext";
+import Swal from "sweetalert2";
 
 const Presentation = () => {
   const { user } = useAuthContext();
@@ -30,10 +31,18 @@ const Presentation = () => {
 
     // DELETE function
     const handleDelete = async (id) => {
-      if (!window.confirm("Are you sure you want to delete this presentation?")) {
-        return;
-      }
-  
+      const result = await Swal.fire({
+        title: "Are you sure?",
+        text: "Do you want to delete this presentation?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!",
+      });
+    
+      if (!result.isConfirmed) return;
+    
       try {
         const response = await fetch(`http://localhost:5008/api/Presentation/${id}`, {
           method: "DELETE",
@@ -41,20 +50,20 @@ const Presentation = () => {
             Authorization: `Bearer ${user.accesstoken}`,
           },
         });
-  
+    
         if (!response.ok) {
           throw new Error("Failed to delete presentation");
         }
-  
-        // Update the state after successful deletion
+    
         setpresentationData((prevData) => prevData.filter((p) => p.id !== id));
-  
-        alert("Presentation deleted successfully!");
+    
+        Swal.fire("Deleted!", "Presentation has been deleted.", "success");
       } catch (error) {
         console.error("Error:", error);
-        alert("Error deleting presentation");
+        Swal.fire("Error", "Error deleting presentation", "error");
       }
     };
+    
 
   return (
     <main className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
