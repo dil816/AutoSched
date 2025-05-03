@@ -51,7 +51,7 @@ const ScheduleView = () => {
           <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
             <div className="bg-blue-600 p-6 text-white">
               <h1 className="text-3xl font-bold">
-                {schedulesData.presentation?.presentationName.toUpperCase()}
+                {schedulesData.presentation?.presentationName.toUpperCase()} S{schedulesData.id}
               </h1>
               <p className="text-lg">
                 Type: {schedulesData.presentation?.type}
